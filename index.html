@@ -1,0 +1,856 @@
+
+
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BorderPulse 代码导读 —— 写给不写代码的读者</title>
+<style>
+  :root{
+    --ink:#1c1b18; --sub:#5d5a52; --line:#e3e0d7; --bg:#faf9f6; --card:#ffffff;
+    --py:#4472c4; --py-bg:#e9f0fc; --fe:#2b9d8a; --fe-bg:#e2f4f0;
+    --dt:#c9a13b; --dt-bg:#faf3dd; --qa:#6da55d; --qa-bg:#edf5e9;
+    --ne:#898781; --ne-bg:#f0efec;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:16px/1.75 "Segoe UI","PingFang SC","Microsoft YaHei",system-ui,sans-serif;}
+  main{max-width:1000px;margin:0 auto;padding:28px 20px 80px}
+  h1{font-size:26px;line-height:1.35;margin:18px 0 4px}
+  .sub{color:var(--sub);font-size:14px;margin-bottom:22px}
+  h2{font-size:21px;margin:52px 0 14px;padding-left:12px;border-left:5px solid var(--py)}
+  h2.d{border-color:var(--dt)} h2.f{border-color:var(--fe)} h2.q{border-color:var(--qa)}
+  h2.n{border-color:var(--ne)}
+  h3{font-size:16.5px;margin:0 0 6px}
+  p{margin:8px 0}
+  .f{font-family:Consolas,"Courier New",monospace;font-size:.88em;background:#f1efe8;
+     border:1px solid #e0ddd2;border-radius:4px;padding:0 5px;white-space:nowrap}
+  .lead{font-size:17px}
+  .note{background:#fff8e6;border:1px solid #ecdfb2;border-radius:8px;padding:10px 14px;font-size:14.5px}
+  .tracks{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin:16px 0}
+  .track{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+  .track b{display:block;margin-bottom:4px}
+  figure{margin:18px 0;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:14px}
+  figure img{max-width:100%;border-radius:6px;border:1px solid var(--line)}
+  figcaption{font-size:14px;color:var(--sub);margin-top:8px;line-height:1.6}
+  .file{background:var(--card);border:1px solid var(--line);border-left-width:6px;
+        border-radius:10px;padding:14px 18px;margin:14px 0}
+  .file.py{border-left-color:var(--py)} .file.fe{border-left-color:var(--fe)}
+  .file.dt{border-left-color:var(--dt)} .file.qa{border-left-color:var(--qa)}
+  .file.ne{border-left-color:var(--ne)}
+  .meta{font-size:13.5px;color:var(--sub);margin:2px 0 8px}
+  .links{font-size:13.5px;color:var(--sub);border-top:1px dashed var(--line);
+         margin-top:10px;padding-top:8px}
+  .one{background:#f4f7fd;border-radius:8px;padding:8px 12px;font-size:15px;margin-top:8px}
+  .one::before{content:"📍 一句话记住：";font-weight:600}
+  table{border-collapse:collapse;width:100%;font-size:14.5px;background:var(--card)}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f3f1ea;font-size:13.5px}
+  .dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:baseline}
+  .d-py{background:var(--py)} .d-fe{background:var(--fe)} .d-dt{background:var(--dt)}
+  .d-qa{background:var(--qa)} .d-ne{background:var(--ne)}
+  dt{font-weight:700;margin-top:14px}
+  dd{margin:2px 0 0 0}
+  dl{margin:6px 0}
+  .qa-list p{margin:12px 0}
+  .qa-list b{color:#24478f}
+  .vqa h3{font-size:15.5px;margin:0 0 4px;line-height:1.5}
+  .vqa .ven{margin:6px 0}
+  .vqa .vcn{color:var(--sub);font-size:14px;border-top:1px dashed var(--line);
+            margin-top:6px;padding-top:7px}
+  mark{background:#fff3bf;padding:0 3px;border-radius:3px}
+  .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+  .fig-grid figure{margin:0}
+  svg text{font-family:"Segoe UI","Microsoft YaHei",system-ui,sans-serif}
+  svg .mono{font-family:Consolas,"Courier New",monospace}
+  html{scroll-behavior:smooth}
+  #toc{position:fixed;top:20px;left:20px;bottom:20px;width:208px;overflow-y:auto;
+       background:var(--card);border:1px solid var(--line);border-radius:12px;
+       padding:14px 8px;font-size:13px;line-height:2;z-index:50;display:none;
+       box-shadow:0 2px 12px rgba(0,0,0,.08)}
+  #toc b{display:block;font-size:13.5px;margin:0 0 4px 10px;color:var(--sub)}
+  #toc a{display:block;padding:1px 10px 1px 12px;border-left:3px solid transparent;
+         color:var(--ink);text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #toc a:hover{background:#f3f1ea}
+  #toc a.on{border-left-color:var(--py);background:var(--py-bg);font-weight:600}
+  #toc a.g{padding-left:26px;font-size:12.5px;color:var(--sub)}
+  #tocBtn{position:fixed;left:16px;bottom:16px;z-index:60;width:48px;height:48px;border-radius:50%;
+          border:1px solid var(--line);background:var(--card);box-shadow:0 2px 10px rgba(0,0,0,.18);
+          font-size:21px;cursor:pointer;color:var(--ink)}
+  #toc.open{display:block}
+  @media(min-width:1480px){#toc{display:block}#tocBtn{display:none}}
+  @media print{body{background:#fff}.file,figure,.track{break-inside:avoid}#toc,#tocBtn{display:none}}
+</style>
+</head>
+<body>
+<nav id="toc" aria-label="目录">
+  <b>📑 目录</b>
+  <a href="#s0">0｜三种读法</a>
+  <a href="#s1">1｜这个项目是什么</a>
+  <a href="#s2">2｜全景图（33 文件）</a>
+  <a href="#s3">3｜产品的样子：五页签</a>
+  <a href="#s4">4｜逐文件精讲</a>
+  <a href="#s5">5｜前端怎么配合</a>
+  <a href="#s6">6｜插图对照</a>
+  <a href="#s7">7｜小词典</a>
+  <a href="#s8">8｜六个测试</a>
+  <a href="#s9">9｜数字速查</a>
+  <a href="#s10">10｜常见问答</a>
+  <a href="#s11"><b>11｜问答备考 · 29 题</b></a>
+  <a class="g" href="#qg1">① 开场大局题</a>
+  <a class="g" href="#qg2">② 设计选择</a>
+  <a class="g" href="#qg3">③ 模型细节</a>
+  <a class="g" href="#qg4">④ 代码实现</a>
+  <a class="g" href="#qg5">⑤ 结果与局限</a>
+  <a class="g" href="#qg6">⑥ AI 使用</a>
+  <a href="#s12">12｜亲眼看它跑</a>
+  <a href="#s13">13｜一页总表</a>
+</nav>
+<button id="tocBtn" aria-label="打开目录">☰</button>
+<main>
+
+<h1>BorderPulse 代码导读<br><span style="font-size:17px;font-weight:500;color:var(--sub)">写给不写代码的读者：33 个文件各自在做什么、彼此怎么连接</span></h1>
+<p class="sub">配套：<span class="f">BorderPulse_code.zip</span>（提交的代码包）· 阅读日期 2026-11-15 ·
+组内学习材料，不属于提交物。本页图片引用同目录的 <span class="f">figs/</span> 文件夹。</p>
+
+<div class="note">项目里每个代码文件的<b>开头都有中文说明</b>，代码内部几乎每一段都有中文注释——
+这份导读告诉你"先看哪个、看什么"，读不懂某一行时，回到文件里找对应的中文注释即可。</div>
+
+<h2 id="s0">0｜三种读法，按时间选</h2>
+<div class="tracks">
+  <div class="track"><b>⏱ 10 分钟版</b>只看 §1 项目是什么 → §2 全景图 → §13 一页总表。读完能说出每个文件的名字和一句话职责。</div>
+  <div class="track"><b>⏱ 40 分钟版</b>加上 §4 逐文件卡片和 §7 小词典。读完能讲出每条流水线步骤在解决什么问题。</div>
+  <div class="track"><b>⏱ 2 小时版 / <span style="color:#b3541e">问答备考版</span></b>再加上 §8–§11（测试、数字速查、常见问答、<b>个人问答备考</b>），并对照真实文件看头部注释。三人都要过一遍 §11——考官可问任何组件，不限分工。</div>
+</div>
+
+<h2 id="s1">1｜这个项目是什么</h2>
+<p class="lead">BorderPulse（口岸脉搏）是一个装在手机上的<b>香港口岸错峰过关助手</b>：
+用香港入境处每天公布的过关人次，<b>提前 14 天</b>预测 8 个陆路口岸、进出两个方向共 16 条序列的拥挤程度，
+告诉用户<b>换日子、换口岸、换方向，还是挑个顺的时段</b>；再用排队模拟把"那天有多少人"翻译成
+"要排多久"；旁边还有一条情感分析支线，推荐人多时值得去的错峰景点。</p>
+<p>它是一个 <b>PWA</b>（Progressive Web App，网页形态的 App）：用手机浏览器打开一次，
+就能"添加到主屏幕"像 App 一样使用，而且<b>完全离线可用</b>——到了罗湖口岸没信号也能查。</p>
+<p>整个产品分两条线，这是理解全部代码的钥匙：</p>
+<table>
+  <tr><th style="width:50%">🖥 线下：电脑上跑的 Python 流水线（跑一次，几分钟）</th><th>📱 线上：手机浏览器里的应用（每次打开）</th></tr>
+  <tr><td>读官方 CSV → 清洗异常 → 造特征 → 训练预测模型 → 算档位概率和排队风险 → 把结果<b>打包成一个小文件 <span class="f">data.json</span></b></td>
+      <td>浏览器读 <span class="f">data.json</span>，把数字画成热力日历、对比卡片、排队模拟；排队模拟用 JavaScript 在手机上<b>现场再算一遍</b>（同一套公式和常数）</td></tr>
+  <tr><td>重活累活都在这里干：6 万行数据、56 个特征、400 棵树、3000 次模拟</td>
+      <td>手机上零负担：不用服务器、不用算力，打开即用</td></tr>
+</table>
+<p>换句话说：<b>预测是"预制"的，体验是"现热"的。</b>手机端唯一现场计算的是排队模拟（因为它要按用户选的口岸和日期即时出结果）。</p>
+
+<h2 class="f" id="s2">2｜全景图：一张图看懂 33 个文件</h2>
+<p>箭头方向 = 数据流动方向。颜色分类：<b style="color:var(--py)">蓝 = Python 代码</b> ·
+<b style="color:var(--fe)">青 = 前端文件</b> · <b style="color:var(--dt)">黄 = 数据文件</b> ·
+<b style="color:var(--qa)">绿 = 质检与测试</b> · <b style="color:var(--ne)">灰 = 外部数据源</b>。</p>
+
+<figure>
+<svg viewBox="0 0 1100 720" role="img" aria-label="BorderPulse 全景流水线图">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#555"/>
+    </marker>
+    <marker id="arL" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 z" fill="#b0a26a"/>
+    </marker>
+  </defs>
+  <style>
+    .b{stroke-width:1.4}
+    .pyb{fill:var(--py-bg);stroke:var(--py)} .feb{fill:var(--fe-bg);stroke:var(--fe)}
+    .dtb{fill:var(--dt-bg);stroke:var(--dt)} .qab{fill:var(--qa-bg);stroke:var(--qa)}
+    .neb{fill:var(--ne-bg);stroke:var(--ne)}
+    text{font-size:12px;fill:#1c1b18} .tt{font-weight:700;font-size:12.5px}
+    .sm{font-size:11px;fill:#5d5a52} .path{font-size:11.5px}
+  </style>
+
+  <!-- A. 外部数据源 -->
+  <text x="20" y="26" class="tt">① 外部数据源（香港开放数据 + Kaggle）</text>
+  <g class="b"><rect class="neb" x="20"  y="38" width="205" height="46" rx="8"/></g>
+  <text x="30" y="57" class="tt">香港入境处 ImmD</text><text x="30" y="74" class="sm">每日各管制站旅客人次</text>
+  <g class="b"><rect class="neb" x="240" y="38" width="170" height="46" rx="8"/></g>
+  <text x="250" y="57" class="tt">入境处</text><text x="250" y="74" class="sm">节日区间客流</text>
+  <g class="b"><rect class="neb" x="425" y="38" width="150" height="46" rx="8"/></g>
+  <text x="435" y="57" class="tt">海关 C&amp;ED</text><text x="435" y="74" class="sm">年度吞吐（校验用）</text>
+  <g class="b"><rect class="neb" x="590" y="38" width="130" height="46" rx="8"/></g>
+  <text x="600" y="57" class="tt">天文台 HKO</text><text x="600" y="74" class="sm">天气（辅助）</text>
+  <g class="b"><rect class="neb" x="735" y="38" width="160" height="46" rx="8"/></g>
+  <text x="745" y="57" class="tt">Kaggle</text><text x="745" y="74" class="sm">TripAdvisor 评论 16 万条</text>
+
+  <!-- B. 原始数据层 -->
+  <text x="20" y="116" class="tt">② 原始数据（仓库里唯一的数据文件）</text>
+  <g class="b"><rect class="dtb" x="20" y="128" width="330" height="50" rx="8"/></g>
+  <text x="30" y="148" class="path mono">data/raw/immd_daily.csv</text>
+  <text x="30" y="166" class="sm">3.4 MB · 约 6.3 万行 · 2021-01 至今 · 口岸×进出×身份×日期</text>
+  <g class="b"><rect class="dtb" x="370" y="128" width="230" height="50" rx="8"/></g>
+  <text x="380" y="148" class="path mono">data/SOURCES.md</text>
+  <text x="380" y="166" class="sm">5 个数据集的链接、用途、验证记录</text>
+  <text x="615" y="150" class="sm">节日表→特征 · C&amp;ED/天气→设计与校验，</text>
+  <text x="615" y="166" class="sm">不直接进管道；评论语料→nlp.py（未随包分发）</text>
+  <line x1="122" y1="84" x2="122" y2="126" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <!-- C. Python 流水线 -->
+  <text x="20" y="216" class="tt">③ Python 流水线（电脑上跑一次，产出全部"燃料"）</text>
+  <g class="b"><rect class="pyb" x="20" y="228" width="520" height="34" rx="8"/></g>
+  <text x="34" y="250" class="tt mono">src/build_docs.py —— 总调度：一条命令跑完整条线</text>
+
+  <g class="b"><rect class="pyb" x="20"  y="278" width="96" height="58" rx="8"/></g>
+  <text x="27"  y="296" class="path mono">lof.py</text><text x="27"  y="311" class="sm">质检：剔</text><text x="27" y="326" class="sm">台风异常日</text>
+  <g class="b"><rect class="pyb" x="126" y="278" width="100" height="58" rx="8"/></g>
+  <text x="133" y="296" class="path mono">features.py</text><text x="133" y="311" class="sm">56 列特征</text><text x="133" y="326" class="sm">日期→数字</text>
+  <g class="b"><rect class="pyb" x="236" y="278" width="96" height="58" rx="8"/></g>
+  <text x="243" y="296" class="path mono">gbt.py</text><text x="243" y="311" class="sm">主力预测</text><text x="243" y="326" class="sm">递归 14 天</text>
+  <g class="b"><rect class="pyb" x="342" y="278" width="96" height="58" rx="8"/></g>
+  <text x="349" y="296" class="path mono">markov.py</text><text x="349" y="311" class="sm">拥挤档位</text><text x="349" y="326" class="sm">流转概率</text>
+  <g class="b"><rect class="pyb" x="448" y="278" width="92" height="58" rx="8"/></g>
+  <text x="455" y="296" class="path mono">mc_queue.py</text><text x="455" y="311" class="sm">人数→排队</text><text x="455" y="326" class="sm">分钟</text>
+  <line x1="116" y1="307" x2="124" y2="307" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="226" y1="307" x2="234" y2="307" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="332" y1="307" x2="340" y2="307" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="438" y1="307" x2="446" y2="307" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <g class="b"><rect class="pyb" x="20" y="352" width="520" height="76" rx="8"/></g>
+  <text x="34" y="374" class="sm">总调度里还内置：序列筛选（数据 ≥45 天且日均 ≥50 人，沙头角出局）· 节假日系数 ·</text>
+  <text x="34" y="392" class="sm">日内分时模板（24 小时形状 × 口岸类型 × 方向）· 开闭关时间 · 60 天迷你走势 ·</text>
+  <text x="34" y="410" class="sm">最近实测值 · 模型成绩单 —— 全部打包进下面这个文件</text>
+  <line x1="280" y1="336" x2="280" y2="350" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <!-- nlp 支线 -->
+  <g class="b"><rect class="pyb" x="735" y="228" width="160" height="58" rx="8"/></g>
+  <text x="745" y="248" class="path mono">src/models/nlp.py</text>
+  <text x="745" y="264" class="sm">评论→好评率（旁路，</text><text x="745" y="278" class="sm">训练语料不随包分发）</text>
+  <line x1="815" y1="84" x2="815" y2="226" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <!-- D. 产出 -->
+  <text x="20" y="460" class="tt">④ 流水线产物 = 应用的全部燃料</text>
+  <g class="b"><rect class="dtb" x="20" y="472" width="330" height="58" rx="8"/></g>
+  <text x="30" y="492" class="path mono">docs/data.json</text>
+  <text x="30" y="510" class="sm">60 KB：16 序列×14 天预测 + 分时模板 + 档位概率 + 模型卡</text>
+  <g class="b"><rect class="dtb" x="370" y="472" width="170" height="58" rx="8"/></g>
+  <text x="380" y="492" class="path mono">docs/nlp.json</text>
+  <text x="380" y="510" class="sm">各景点好评率与关键词</text>
+  <line x1="170" y1="428" x2="170" y2="470" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="815" y1="286" x2="815" y2="532" stroke="#555" stroke-width="1.4"/>
+  <line x1="815" y1="532" x2="542" y2="532" stroke="#555" stroke-width="1.4"/>
+  <line x1="542" y1="530" x2="542" y2="512" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+
+  <!-- E. 前端 -->
+  <text x="20" y="572" class="tt">⑤ 前端应用（手机浏览器，离线可用）</text>
+  <g class="b"><rect class="feb" x="20"  y="584" width="120" height="58" rx="8"/></g>
+  <text x="28"  y="602" class="path mono">sw.js</text><text x="28" y="618" class="sm">缓存管家：</text><text x="28" y="633" class="sm">断网也能开</text>
+  <g class="b"><rect class="feb" x="155" y="584" width="120" height="58" rx="8"/></g>
+  <text x="163" y="602" class="path mono">index.html</text><text x="163" y="618" class="sm">骨架：五个</text><text x="163" y="633" class="sm">空页签</text>
+  <g class="b"><rect class="feb" x="290" y="584" width="150" height="58" rx="8"/></g>
+  <text x="298" y="602" class="path mono">app.js</text><text x="298" y="618" class="sm">大脑：渲染全部页面 +</text><text x="298" y="633" class="sm">浏览器排队模拟</text>
+  <g class="b"><rect class="feb" x="455" y="584" width="120" height="58" rx="8"/></g>
+  <text x="463" y="602" class="path mono">styles.css</text><text x="463" y="618" class="sm">外观：明暗</text><text x="463" y="633" class="sm">双主题</text>
+  <g class="b"><rect class="feb" x="590" y="584" width="160" height="58" rx="8"/></g>
+  <text x="598" y="602" class="path mono">manifest + icons/</text><text x="598" y="618" class="sm">添加到主屏幕的</text><text x="598" y="633" class="sm">名字与图标</text>
+  <g class="b"><rect x="775" y="584" width="120" height="58" rx="8" fill="#2e2c28"/></g>
+  <text x="795" y="608" fill="#fff" class="tt">👤 用户</text>
+  <text x="790" y="626" class="sm" fill="#cfcabb">离线 · 三语 ·</text><text x="790" y="640" class="sm" fill="#cfcabb">像 App 一样用</text>
+
+  <line x1="170" y1="530" x2="330" y2="582" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <text x="196" y="552" class="sm">读入燃料</text>
+  <line x1="440" y1="613" x2="453" y2="613" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="275" y1="613" x2="288" y2="613" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="575" y1="613" x2="588" y2="613" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="750" y1="613" x2="773" y2="613" stroke="#555" stroke-width="1.4" marker-end="url(#ar)"/>
+  <line x1="80" y1="642" x2="80" y2="668" stroke="#b0a26a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#arL)"/>
+  <line x1="80" y1="668" x2="700" y2="668" stroke="#b0a26a" stroke-width="1.3" stroke-dasharray="4 3"/>
+  <line x1="700" y1="668" x2="700" y2="644" stroke="#b0a26a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#arL)"/>
+  <text x="330" y="663" class="sm" fill="#8a7c46">首次访问时 sw.js 把整套文件 + data.json 存进手机 → 之后断网也能打开</text>
+
+  <!-- F. 质检支线 -->
+  <text x="930" y="116" class="tt">⑥ 质检支线</text>
+  <text x="930" y="133" class="sm">不进产品，</text>
+  <text x="930" y="148" class="sm">负责证明产品靠谱</text>
+  <g class="b"><rect class="qab" x="930" y="160" width="160" height="58" rx="8"/></g>
+  <text x="938" y="178" class="path mono">backtest.py</text><text x="938" y="194" class="sm">滚动回测考官：</text><text x="938" y="208" class="sm">三个选手比误差</text>
+  <g class="b"><rect class="dtb" x="930" y="232" width="160" height="40" rx="8"/></g>
+  <text x="938" y="250" class="path mono">report/backtest.json</text><text x="938" y="264" class="sm">成绩单（供画图）</text>
+  <g class="b"><rect class="qab" x="930" y="288" width="160" height="58" rx="8"/></g>
+  <text x="938" y="306" class="path mono">make_figures.py</text><text x="938" y="322" class="sm">报告 12 张图</text><text x="938" y="336" class="sm">（matplotlib）</text>
+  <g class="b"><rect class="qab" x="930" y="364" width="160" height="46" rx="8"/></g>
+  <text x="938" y="382" class="path mono">make_icons.py</text><text x="938" y="398" class="sm">生成全套 PWA 图标</text>
+  <g class="b"><rect class="qab" x="930" y="428" width="160" height="58" rx="8"/></g>
+  <text x="938" y="446" class="path mono">_build/ 6 个测试</text><text x="938" y="462" class="sm">真浏览器里给界面</text><text x="938" y="476" class="sm">做回归体检</text>
+  <line x1="540" y1="245" x2="928" y2="189" stroke="#8aa22f" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="1010" y1="218" x2="1010" y2="230" stroke="#8aa22f" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+  <line x1="440" y1="584" x2="990" y2="490" stroke="#8aa22f" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+</svg>
+<figcaption><b>怎么用这张图：</b>任何被问到"X 文件是干嘛的"，先在这张图上指出它的位置（第几步、上游是谁、下游是谁），
+再用一句话说它的职责。这比背代码细节可靠得多。</figcaption>
+</figure>
+
+<h2 id="s3">3｜产品的样子：五个页签</h2>
+<p>App 底部有五个按钮（<span class="f">index.html</span> 里的底部导航，由 <span class="f">app.js</span> 切换显示）。
+日历的四档拥挤色与报告图、前端完全一致：<b style="color:#0ca30c">■ 顺</b> <b style="color:#c98f12">■ 缓</b>
+<b style="color:#ec835a">■ 忙</b> <b style="color:#d03b3b">■ 爆</b>。</p>
+<figure>
+<svg viewBox="0 0 640 300" role="img" aria-label="五个页签示意">
+  <style>text{font-size:11.5px;fill:#1c1b18}.tt{font-weight:700}</style>
+  <!-- phone 1: calendar -->
+  <g>
+    <rect x="10" y="10" width="180" height="280" rx="16" fill="#fff" stroke="#c9c5b8"/>
+    <rect x="10" y="10" width="180" height="30" rx="16" fill="#2a78d6"/><rect x="10" y="26" width="180" height="14" fill="#2a78d6"/>
+    <text x="22" y="29" fill="#fff" class="tt">BorderPulse 口岸脉搏</text>
+    <text x="22" y="56">罗湖 · 未来 14 天</text>
+    <g>
+      <!-- 7x4 heat cells -->
+      <g>
+        <rect x="22" y="64" width="21" height="24" rx="4" fill="#0ca30c"/><rect x="46" y="64" width="21" height="24" rx="4" fill="#fab219"/>
+        <rect x="70" y="64" width="21" height="24" rx="4" fill="#0ca30c"/><rect x="94" y="64" width="21" height="24" rx="4" fill="#0ca30c"/>
+        <rect x="118" y="64" width="21" height="24" rx="4" fill="#ec835a"/><rect x="142" y="64" width="21" height="24" rx="4" fill="#d03b3b"/>
+        <rect x="166" y="64" width="14" height="24" rx="4" fill="#0ca30c"/>
+        <rect x="22" y="92" width="21" height="24" rx="4" fill="#0ca30c"/><rect x="46" y="92" width="21" height="24" rx="4" fill="#0ca30c"/>
+        <rect x="70" y="92" width="21" height="24" rx="4" fill="#fab219"/><rect x="94" y="92" width="21" height="24" rx="4" fill="#0ca30c"/>
+        <rect x="118" y="92" width="21" height="24" rx="4" fill="#0ca30c"/><rect x="142" y="92" width="21" height="24" rx="4" fill="#ec835a"/>
+        <rect x="166" y="92" width="14" height="24" rx="4" fill="#fab219"/>
+      </g>
+    </g>
+    <text x="22" y="134" class="tt">11-22（日）详情</text>
+    <text x="22" y="150">预计 62,400 人 · 爆</text>
+    <g>
+      <rect x="22" y="158" width="10" height="11" fill="#c9c5b8"/><rect x="34" y="158" width="10" height="14" fill="#c9c5b8"/>
+      <rect x="46" y="158" width="10" height="19" fill="#c9c5b8"/><rect x="58" y="158" width="10" height="27" fill="#2a78d6"/>
+      <rect x="70" y="158" width="10" height="36" fill="#c9c5b8"/><rect x="82" y="158" width="10" height="41" fill="#c9c5b8"/>
+      <rect x="94" y="158" width="10" height="45" fill="#c9c5b8"/><rect x="106" y="158" width="10" height="37" fill="#c9c5b8"/>
+      <rect x="118" y="158" width="10" height="29" fill="#c9c5b8"/><rect x="130" y="158" width="10" height="21" fill="#c9c5b8"/>
+      <rect x="142" y="158" width="10" height="16" fill="#c9c5b8"/><rect x="154" y="158" width="10" height="11" fill="#c9c5b8"/>
+    </g>
+    <text x="22" y="222" class="tt" fill="#2a78d6">最佳窗口 13–15 时</text>
+    <text x="22" y="238">历史规律：缓 76% 顺 18%</text>
+    <rect x="10" y="256" width="180" height="34" rx="16" fill="#f3f1ea"/>
+    <text x="24" y="277" class="tt">日历</text><text x="52" y="277">对比</text><text x="80" y="277">排队</text><text x="106" y="277">景点</text><text x="132" y="277">关于</text>
+  </g>
+  <!-- phone 2: queue -->
+  <g transform="translate(230,0)">
+    <rect x="0" y="10" width="180" height="280" rx="16" fill="#fff" stroke="#c9c5b8"/>
+    <rect x="0" y="10" width="180" height="30" rx="16" fill="#2a78d6"/><rect x="0" y="26" width="180" height="14" fill="#2a78d6"/>
+    <text x="12" y="29" fill="#fff" class="tt">排队模拟</text>
+    <text x="12" y="56">罗湖 · 11-22 · 出发</text>
+    <rect x="12" y="64" width="156" height="44" rx="8" fill="#fdeaea" stroke="#d03b3b"/>
+    <text x="22" y="82" class="tt">排队超半小时概率</text><text x="128" y="82" class="tt" fill="#d03b3b">41%</text>
+    <text x="22" y="99" class="tt">等待约 34 分 · 最差 52 分</text>
+    <rect x="12" y="116" width="156" height="44" rx="8" fill="#eef4fd" stroke="#4472c4"/>
+    <text x="22" y="134" class="tt">换到深圳湾？</text>
+    <text x="22" y="151">当天约为罗湖 0.6 倍，顺</text>
+    <text x="12" y="182" class="sm">3000 次模拟 · 就在你的浏览器里跑</text>
+    <text x="12" y="198" class="sm">与电脑端同一套公式、常数、种子</text>
+    <rect x="0" y="256" width="180" height="34" rx="16" fill="#f3f1ea"/>
+    <text x="14" y="277">日历</text><text x="42" y="277">对比</text><text x="70" y="277" class="tt">排队</text><text x="100" y="277">景点</text><text x="128" y="277">关于</text>
+  </g>
+  <!-- right: five tabs text -->
+  <g transform="translate(440,10)">
+    <text x="0" y="14" class="tt">① 日历</text>
+    <text x="0" y="31">14 天 × 8 口岸热力图；点开</text>
+    <text x="0" y="47">某天：区间预测、档位概率、</text>
+    <text x="0" y="63">最近实测、逐小时条与最佳窗口</text>
+    <text x="0" y="92" class="tt">② 对比</text>
+    <text x="0" y="109">同一天 8 个口岸并排：</text>
+    <text x="0" y="125">60 天走势、× 倍数、换口岸建议</text>
+    <text x="0" y="154" class="tt">③ 排队</text>
+    <text x="0" y="171">选口岸和日期，浏览器现场</text>
+    <text x="0" y="187">跑 3000 次排队模拟</text>
+    <text x="0" y="216" class="tt">④ 景点</text>
+    <text x="0" y="233">按好评率排序的错峰去处，</text>
+    <text x="0" y="249">附评论关键词</text>
+    <text x="0" y="278" class="tt">⑤ 关于</text>
+  </g>
+</svg>
+<figcaption>界面示意（简化线稿）。文案刻意避免术语：用户看到的是"排队超半小时的可能性"，不是"Erlang-C"；方法名放在"关于"页和报告里。</figcaption>
+</figure>
+
+<h2 id="s4">4｜推荐阅读顺序 + 逐文件精讲</h2>
+<p>顺序原则：<b>跟着数据走一遍</b>——从原始数字出发，走到手机屏幕为止。</p>
+
+<h3 style="margin:22px 0 4px">第 1 步 · 项目名片</h3>
+<div class="file ne" id="f-readme">
+  <h3><span class="f">README.md</span></h3>
+  <p class="meta">建议用时 5 分钟</p>
+  <p>项目的门面：一段话介绍产品、在线地址、四个功能页签说明、流水线示意、回测成绩表、数据来源清单、目录结构、本地运行命令。
+  外人（包括评分老师）对项目的第一印象几乎都来自它。</p>
+  <div class="one">先读它，5 分钟建立全局；后面每读一个文件回来对一次位置。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 2 步 · 数字从哪来</h3>
+<div class="file dt" id="f-sources">
+  <h3><span class="f">data/SOURCES.md</span></h3>
+    <p>数据"户口本"：5 个数据集各自的用途、官方链接、粒度、核验状态（全部于 2026-11-09 逐条验证过）。
+  里面还记录了一条重要的 Day-1 发现：<b>海关 C&amp;ED 只有年度粒度</b>，做不了日容量分母，
+  于是排队模型的"容量"改由各口岸自身历史高分位数（P90 日负荷）反推——这是数据现实倒逼设计的典型例子。</p>
+  <div class="one">5 个源里只有"入境处每日人次"真正进入管道；其余用于特征设计、容量校验和情感训练。</div>
+</div>
+<div class="file dt" id="f-csv">
+  <h3><span class="f">data/raw/immd_daily.csv</span></h3>
+    <p>唯一的原始数据文件：3.4 MB、约 6.3 万行、2021-01-01 至今。每行 = 某口岸 × 入境/出境 × 身份（港人/内地客/其他）× 日期 的人数。
+  用 Excel 就能打开看。2023 年 2 月 6 日复关之前的空档期也在这里——这是特征工程里"复关断点"的来源。</p>
+  <div class="one">整个产品的所有预测，追根溯源都出自这一个文件。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 3 步 · 先看产物，再看工厂</h3>
+<div class="file dt" id="f-datajson">
+  <h3><span class="f">docs/data.json</span></h3>
+    <p>60 KB 的 JSON 文件，手机 App 只"读"它、不在手机上重新预测。内容包括：16 条序列 × 14 天的预测（含 P10–P90 区间）、
+  档位概率、每序列最近一次官方实测、60 天迷你走势（画对比页的小折线用）、分时模板、开闭关时间、
+  异常日统计、以及一张"模型卡"（56 个特征 / 400 棵树 / 回测成绩，关于页展示的就是它）。</p>
+  <div class="one">看懂这个文件里有什么，就看懂了整个产品"知道"什么。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 4 步 · 流水线总调度</h3>
+<div class="file py" id="f-builddocs">
+  <h3><span class="f">src/build_docs.py</span></h3>
+    <p>流水线的"总调度"，一条命令 <span class="f">python src/build_docs.py</span> 从 CSV 跑到 data.json。顺序是：
+  读 CSV → <b>筛序列</b>（数据 ≥45 天且日均 ≥50 人的才保留——沙头角这种小口岸因为数字太小、百分比动辄暴涨而被筛掉）→
+  LOF 剔异常 → 节假日系数 → 特征面板 → 训练 GBT → 递归预测 14 天 → 马尔可夫档位 → 分时模板 × 每小时排队风险 → 打包。</p>
+  <p>它自己不发明算法，只负责把 <span class="f">models/</span> 里的六个模块按正确顺序串起来，并把结果整理成前端要的格式。</p>
+  <div class="one">把这一件当"目录页"读：读到哪里调用了不懂的模块，再跳去那个模块的卡片。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 5–10 步 · 六个模型模块（流水线的车间）</h3>
+<div class="file py" id="f-lof">
+  <h3><span class="f">src/models/lof.py</span> —— 质检员</h3>
+  <p class="meta">流水线位置：第一道工序</p>
+  <p>LOF（Local Outlier Factor，局部异常因子）的思路很直觉：<b>看一个点在邻居当中是否显得"孤单"</b>。
+  台风天关口关闭、客流断崖式下跌，这种日子如果混进训练集，模型会把灾难当成规律学进去。</p>
+  <p>这里用了<b>双闸门</b>：LOF 分数 &gt; 1.3 <b>且</b> 排进该序列前 1.5% 才标记——单用分数会误伤正常高峰，
+  加上比例闸门后既抓得住异常又不冤枉好数据。被它独立抓出来的有：台风苏拉（2023-09-01/02）、
+  破纪录黑雨（2023-09-08）、台风摩羯（2024-09-06）。全部序列合计标记 411 天，<b>只从训练集中剔除，不用于预测</b>。</p>
+  <div class="one">先洗数据再训练——和做菜先挑坏叶子一个道理。</div>
+</div>
+<div class="file py" id="f-features">
+  <h3><span class="f">src/models/features.py</span> —— 翻译官 + 备课员</h3>
+    <p>模型只认数字。这个文件把每个"日期"翻译成 <b>56 列数字</b>：星期几、月份、是否节日、处于假期的前段/中段/后段、
+  复关断点（2023-02-06）前后、以及过去 1/7/14/28 天的客流（"滞后特征"——递归预测时，未来的预测值会顶替成新的"昨天"）。</p>
+  <p>另一个关键决定是 <b>16 条序列合并训练</b>（pooled panel）：罗湖的数据量大，沙头角以外的中型口岸靠"借"全体口岸的经验也能学得像样。</p>
+  <div class="one">特征决定模型能"看见"什么——这步做歪，后面全白搭。</div>
+</div>
+<div class="file py" id="f-gbt">
+  <h3><span class="f">src/models/gbt.py</span> —— 主力预测员</h3>
+  <p class="meta">流水线位置：核心工序</p>
+  <p>GBT（梯度提升树）= <b>400 棵小决策树接力纠错</b>：第一棵树先粗猜，后面每棵专攻前面留下的错误，加起来越来越准。
+  三个让它在新数据上稳住的设计：① 预测目标取<b>对数客流</b>（客流是倍数式波动，取对数后误差才对称）；
+  ② <b>早停</b>（验证集不再进步就停手，防死记硬背）；③ 直方图分箱分裂（快且稳）。</p>
+  <p><b>递归预测 14 天</b>：第 1 天的预测会被当作"已知昨天"喂回去算第 2 天，如此滚动——就像下棋连看十四步，误差会累积，
+  所以早停的"稳"特别重要。回测证明这套组合的误差比"按星期几估"低 31%。</p>
+  <div class="one">整个产品的核心数字（未来 14 天每天多少人）都出自这 400 棵树。</div>
+</div>
+<div class="file py" id="f-markov">
+  <h3><span class="f">src/models/markov.py</span> —— 状态推演员</h3>
+  <p class="meta">流水线位置：与 GBT 并行的第二条判断</p>
+  <p>把每天客流按<b>这条序列自己的</b> P50/P85/P95 分位切成四档（顺/缓/忙/爆），再从历史数出"今天缓，明天各档的概率"——
+  这就是马尔可夫链：只看今天的状态推明天，不需要知道为什么。档位切分用每条序列自己的分位数（自标定），
+  所以罗湖的"缓"和文锦渡的"缓"各自贴合自身水平，小口岸不会被大城市淹没。</p>
+  <p>它从"今天实测所在档位"出发往后推 14 天，与 GBT <b>互相独立</b>——日历详情里那行"历史规律"就是它，
+  两条判断可以互相印证。</p>
+  <div class="one">GBT 答"多少人"，马尔可夫答"按这口岸自己的标准，算忙还是算顺"。</div>
+</div>
+<div class="file py" id="f-mcqueue">
+  <h3><span class="f">src/models/mc_queue.py</span> —— 排队翻译官</h3>
+  <p class="meta">流水线位置：把"人数"变成"分钟"</p>
+  <p>旅客不关心人数，关心排多久。排队论的经典公式 <b>Erlang-C</b>（M/M/c 模型：随机到达、c 个柜台、固定服务速度）
+  给出未饱和时的期望等待；但当利用率 ρ ≥ 0.97，稳态公式会发散，而现实大厅只会"饱和"——
+  于是改用三角分布（20 / 45 / 120 分钟）封顶模拟滞留。</p>
+  <p>输入不是定值而是分布：日客流按对数正态抽 3000 个"可能的当天"（<b>蒙特卡洛</b>），汇总成三块决策瓦片：
+  P(排队&gt;30 分钟)、中位等待、P95 等待。柜台数由该口岸历史 P90 日负荷反推（让 P90 那天跑 95% 利用率，至少 4 个）。
+  所有常数（最忙小时占全天 12%、每人 30 秒等）都在文件里公开写明。</p>
+  <div class="one">同一套公式和常数，前端 app.js 里用 JavaScript 又实现了一遍——手机和电脑算出的结果可互相验证。</div>
+</div>
+<div class="file py" id="f-nlp">
+  <h3><span class="f">src/models/nlp.py</span> —— 评论情感分析（旁路）</h3>
+  <p class="meta">流水线位置：独立支线，产出 docs/nlp.json</p>
+  <p>把评论变成"好评/差评"判断：TF-IDF 先把每条评论转成数字向量（一个词在这条评论出现、但在整个语料里罕见，权重就高），
+  类平衡的逻辑回归再学出"什么样的词组合预示差评"，并处理<b>否定范围</b>（"not good" 不能只看 good）。</p>
+  <p>训练语料是 16.1 万条<b>真实带标签</b>的 TripAdvisor 景点评论（因授权与体量原因不随代码包分发，README 有说明）。
+  App 里展示的香港景点评论是<b>明确标注的演示语料</b>；判断模型本身只用真实评论训练。</p>
+  <div class="one">它是"人多的时候去哪"这一页背后的脑子。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 11 步 · 成绩单</h3>
+<div class="file qa" id="f-backtest">
+  <h3><span class="f">src/backtest.py</span> + <span class="f">report/backtest.json</span></h3>
+    <p>"时光倒流"式的考试：在数据末端取 5 个互不重叠的 14 天窗口；每个起点<b>只允许用它之前的数据</b>重新训练
+  （连 LOF 清洗也重算），再预测之后 14 天、对答案——评估里不含任何未来信息，完全模拟产品上线时的真实处境。
+  三个选手同场：星期中位数基线、GBT、sklearn 同类模型（仅作外部对照）。成绩（1120 条预测）：</p>
+  <table>
+    <tr><th>选手</th><th>RMSE（平均误差，人）</th><th>MAPE</th><th>档位命中</th><th>±1 档命中</th></tr>
+    <tr><td>星期中位数基线</td><td>12,743</td><td>30.9%</td><td>32.8%</td><td>86.1%</td></tr>
+    <tr><td><b>GBT（本产品）</b></td><td><b>8,764</b></td><td><b>19.3%</b></td><td><b>64.3%</b></td><td><b>95.2%</b></td></tr>
+    <tr><td>sklearn 对照</td><td>13,209</td><td>24.0%</td><td>56.4%</td><td>90.6%</td></tr>
+  </table>
+  <p>结果写入 <span class="f">backtest.json</span>，报告里的评估图（fig05）直接读它——报告数字与代码产物同源，可复核。</p>
+  <div class="one">"凭什么说它准"——答案全在这份文件里。</div>
+</div>
+
+<h3 style="margin:22px 0 4px">第 12 步 · 前端五件套（应用的身体）</h3>
+<div class="file fe" id="f-index">
+  <h3><span class="f">docs/index.html</span> —— 骨架（约 120 行）</h3>
+    <p>只放"空壳"：应用栏（标题 + 繁/簡/EN 切换）、五个空页签容器、底部导航、点开某天时滑出的详情弹层。
+  所有内容由 <span class="f">app.js</span> 动态填入。唯一例外是"关于"页有一份静态简体内容——
+  即使脚本没加载，用户也能看到基本说明。</p>
+</div>
+<div class="file fe" id="f-appjs">
+  <h3><span class="f">docs/app.js</span> —— 大脑（最大的文件，约 1500 行）</h3>
+    <p>App 的一切行为都在这里：文件开头是一张<b>三语文案表</b>（每种语言的每一句界面文字，切换语言就是换查这张表）；
+  然后是五个页签的渲染——日历热力图与当日详情（逐小时条、当前时间线、最佳 2 小时窗口、最近实测、马尔可夫行）、
+  对比页（P85/P95、60 天迷你折线、× 倍数、换口岸建议）、<b>排队页</b>、景点页、关于页。</p>
+  <p>排队页是亮点：<span class="f">mc_queue.py</span> 的同一套 Erlang-C + 蒙特卡洛逻辑，用 JavaScript 原样再实现一遍——
+  <b>同常数、同随机种子（7005）</b>，在用户手机浏览器里现场跑 3000 次模拟，结果与电脑端可互相复现。</p>
+  <div class="one">前端只有这一处"真的在算"，其余都是把 data.json 的数字画好看。</div>
+</div>
+<div class="file fe" id="f-styles">
+  <h3><span class="f">docs/styles.css</span> —— 外观</h3>
+    <p>四档拥挤色的色阶、卡片式布局、明/暗两套主题（跟随系统）、手机优先的排版、大字号与高对比（无障碍）。</p>
+</div>
+<div class="file fe" id="f-sw">
+  <h3><span class="f">docs/sw.js</span> —— 缓存管家（61 行）</h3>
+    <p>Service Worker：让网页变 PWA 的关键。策略只有两条——界面外壳（HTML/CSS/JS/图标）<b>cache-first</b>（很快、很少变）；
+  <span class="f">data.json</span> <b>network-first</b>（在线先拿最新数据顺手更新缓存，断网回退到上次存的）。
+  文件里一个版本号（如 bp-0.3.10）一变，整套缓存自动作废重装——发布新版的开关就在这。</p>
+  <div class="one">"口岸没信号也能用"的全部秘密，就在这 61 行里。</div>
+</div>
+<div class="file fe" id="f-manifest">
+  <h3><span class="f">docs/manifest.webmanifest</span> + <span class="f">docs/icons/</span></h3>
+  <p>manifest 是"添加到主屏幕"时手机读的安装信息（名字、主题色、图标清单）；icons/ 里是各尺寸图标 PNG（由 <span class="f">make_icons.py</span> 用 Pillow 生成）。</p>
+</div>
+
+<h3 style="margin:22px 0 4px">第 13 步 · 报告的图从哪来</h3>
+<div class="file qa" id="f-figures">
+  <h3><span class="f">src/make_figures.py</span></h3>
+    <p>报告 12 张插图的总工厂（matplotlib）：数据总览、复关对比、节假日系数、LOF 时间线、回测对比、特征重要性、
+  预测扇形图、马尔可夫矩阵、排队分布、分时模板、NLP 结果。其中预测扇形图直接读产品的
+  <span class="f">docs/data.json</span>——<b>报告画的和用户看到的是同一份数字</b>。</p>
+</div>
+
+<h3 style="margin:22px 0 4px">第 14 步 · 六个体检脚本</h3>
+<div class="file qa" id="f-build">
+  <h3><span class="f">_build/</span>（6 个 .js）</h3>
+    <p>用 Playwright 驱动一个真的无头 Edge 浏览器，对着本地起的服务把 App 每个页签点一遍、量一遍——
+  改代码后跑一轮，等于给界面做"回归体检"（详见 §8）。</p>
+</div>
+
+<h2 class="f" id="s5">5｜前端文件之间怎么配合</h2>
+<figure>
+<svg viewBox="0 0 900 330" role="img" aria-label="前端文件关系图">
+  <defs>
+    <marker id="ar2" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#555"/></marker>
+    <marker id="ar3" markerWidth="9" markerHeight="9" refX="7" refY="3" orient="auto"><path d="M0,0 L7,3 L0,6 z" fill="#2b9d8a"/></marker>
+  </defs>
+  <style>text{font-size:12px}.feb{fill:var(--fe-bg);stroke:var(--fe)}.dtb{fill:var(--dt-bg);stroke:var(--dt)} .b{stroke-width:1.4}.tt{font-weight:700}.sm{font-size:11px;fill:#5d5a52}</style>
+  <g class="b"><rect class="feb" x="30" y="30" width="180" height="52" rx="8"/></g>
+  <text x="42" y="50" class="tt mono" font-family="Consolas">index.html</text><text x="42" y="68" class="sm">骨架：空页签 + 底部导航</text>
+  <g class="b"><rect class="feb" x="270" y="30" width="200" height="52" rx="8"/></g>
+  <text x="282" y="50" class="tt mono" font-family="Consolas">app.js</text><text x="282" y="68" class="sm">大脑：填内容 + 排队模拟 + 三语</text>
+  <g class="b"><rect class="feb" x="530" y="30" width="180" height="52" rx="8"/></g>
+  <text x="542" y="50" class="tt mono" font-family="Consolas">styles.css</text><text x="542" y="68" class="sm">外观：色阶 / 卡片 / 明暗主题</text>
+  <line x1="210" y1="56" x2="268" y2="56" stroke="#555" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <line x1="470" y1="56" x2="528" y2="56" stroke="#555" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <text x="216" y="48" class="sm">加载并运行</text><text x="474" y="48" class="sm">套上样式</text>
+
+  <g class="b"><rect class="dtb" x="150" y="140" width="200" height="52" rx="8"/></g>
+  <text x="162" y="160" class="tt mono" font-family="Consolas">data.json</text><text x="162" y="178" class="sm">预测 / 档位 / 分时 / 实测（燃料①）</text>
+  <g class="b"><rect class="dtb" x="420" y="140" width="180" height="52" rx="8"/></g>
+  <text x="432" y="160" class="tt mono" font-family="Consolas">nlp.json</text><text x="432" y="178" class="sm">景点好评率（燃料②）</text>
+  <line x1="330" y1="138" x2="360" y2="84" stroke="#555" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <line x1="480" y1="138" x2="420" y2="84" stroke="#555" stroke-width="1.4" marker-end="url(#ar2)"/>
+  <text x="286" y="118" class="sm">读取并渲染</text><text x="470" y="118" class="sm">读取</text>
+
+  <g class="b"><rect class="feb" x="30" y="240" width="200" height="52" rx="8"/></g>
+  <text x="42" y="260" class="tt mono" font-family="Consolas">sw.js</text><text x="42" y="278" class="sm">首次访问把以上全部缓存 → 离线可用</text>
+  <g class="b"><rect class="feb" x="270" y="240" width="240" height="52" rx="8"/></g>
+  <text x="282" y="260" class="tt mono" font-family="Consolas">manifest.webmanifest</text><text x="282" y="278" class="sm">安装信息：名字 / 主题色 / 图标清单</text>
+  <g class="b"><rect class="feb" x="550" y="240" width="160" height="52" rx="8"/></g>
+  <text x="562" y="260" class="tt mono" font-family="Consolas">icons/</text><text x="562" y="278" class="sm">各尺寸 PNG 图标</text>
+  <line x1="130" y1="238" x2="130" y2="86" stroke="#2b9d8a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <line x1="390" y1="238" x2="390" y2="86" stroke="#2b9d8a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <line x1="630" y1="238" x2="630" y2="86" stroke="#2b9d8a" stroke-width="1.3" stroke-dasharray="4 3" marker-end="url(#ar3)"/>
+  <text x="700" y="300" class="sm">虚线 = 服务与支撑关系（缓存 / 安装）</text>
+  <g><rect x="740" y="110" width="140" height="52" rx="10" fill="#2e2c28"/>
+     <text x="762" y="132" fill="#fff" class="tt">👤 用户手机</text><text x="756" y="150" class="sm" fill="#cfcabb">离线 · 三语 · 类原生</text></g>
+  <line x1="470" y1="56" x2="738" y2="120" stroke="#555" stroke-width="1.4" marker-end="url(#ar2)"/>
+</svg>
+<figcaption>打开 App 的瞬间发生了什么：index.html 先到 → 它拉起 app.js 并套上 styles.css → app.js 请求 data.json / nlp.json
+并渲染五个页签 → 与此同时 sw.js 已把这一切缓存好，下次断网照样打开。</figcaption>
+</figure>
+
+<h2 id="s6">6｜报告插图对照：哪张图是哪个文件画的</h2>
+<p>12 张报告图全部出自 <span class="f">src/make_figures.py</span>（本页 <span class="f">figs/</span> 文件夹内即其输出）。挑几张关键的：</p>
+<div class="fig-grid">
+  <figure><img src="figs/fig01_series_overview.png" alt="16 条序列总览">
+    <figcaption><b>fig01 数据总览</b>：16 条序列的完整历史——疫情空档、2023-02 复关反弹一目了然。读懂数据长什么样，从这张开始。</figcaption></figure>
+  <figure><img src="figs/fig04_lof_timeline.png" alt="LOF 异常标记时间线">
+    <figcaption><b>fig04 LOF 时间线</b>：<span class="f">lof.py</span> 的工作证明——分数尖峰处正是台风苏拉、黑雨、摩羯，异常日抓得又准又不多。</figcaption></figure>
+  <figure><img src="figs/fig07_forecast_fan.png" alt="14 天递归预测扇形图">
+    <figcaption><b>fig07 预测扇形图</b>：<span class="f">gbt.py</span> 递归 14 天的中位线与 P10–P90 区间，直接读产品 data.json——所见即所得。</figcaption></figure>
+  <figure><img src="figs/fig08_markov.png" alt="马尔可夫转移矩阵">
+    <figcaption><b>fig08 马尔可夫</b>：<span class="f">markov.py</span> 的转移矩阵与 h 步档位分布——"今天缓，明天大概率还是缓"。</figcaption></figure>
+  <figure><img src="figs/fig09_mc_wait.png" alt="排队等待分布">
+    <figcaption><b>fig09 排队分布</b>：<span class="f">mc_queue.py</span> 3000 次模拟出的等待时间分布，P(&gt;30 分钟) 就是图中右侧面积。</figcaption></figure>
+  <figure><img src="figs/fig10_intraday_templates.png" alt="日内分时模板">
+    <figcaption><b>fig10 分时模板</b>：铁路/陆路口岸各自的 24 小时形状——早高峰出发、晚高峰返港，这就是"最佳窗口"的形状来源。</figcaption></figure>
+  <figure><img src="figs/fig05_backtest.png" alt="滚动回测对比">
+    <figcaption><b>fig05 回测对比</b>：<span class="f">backtest.py</span> 的成绩可视化——三个选手的误差分布与分序列 RMSE。</figcaption></figure>
+  <figure><img src="figs/fig11_nlp.png" alt="NLP 景点排序">
+    <figcaption><b>fig11 NLP</b>：<span class="f">nlp.py</span> 的景点好评率排序与 sklearn 对照指标。</figcaption></figure>
+</div>
+<p class="note">fig02（复关前后对比）、fig03（节假日系数）、fig05b（分序列 RMSE）、fig06（特征重要性）同出一厂，报告里均有。</p>
+
+<h2 id="s7">7｜小词典：被问到术语时这样说</h2>
+<dl>
+  <dt>CSV / JSON</dt><dd>两种最常见的存数据的文本格式。CSV 像一张表格（Excel 能直接开）；JSON 像"贴了标签的收纳盒"，程序读起来更方便，data.json 就是。</dd>
+  <dt>Python / JavaScript</dt><dd>Python 跑在电脑上，负责重活（训练模型）；JavaScript 跑在浏览器里，负责把结果画出来、和用户互动。本项目两端各司其职。</dd>
+  <dt>NumPy / pandas / matplotlib</dt><dd>Python 的三个工具库：NumPy 算数字（矩阵运算），pandas 整理表格，matplotlib 画图。本项目所有算法只依赖 NumPy，逻辑透明、可在浏览器端对照复现。</dd>
+  <dt>特征 / 特征工程</dt><dd>把"2026-11-22"这种人类信息翻译成数字列（星期日=1、圣诞前夕=1、过去7天均值=…）的过程。模型只见特征，不见日历。</dd>
+  <dt>LOF（局部异常因子）</dt><dd>异常检测方法：一个点在自己的邻居圈里越"孤单"，越可能是异常。这里用来挑出台风/暴雨日。</dd>
+  <dt>GBT（梯度提升树）</dt><dd>许多小决策树接力纠错的集成模型。本项目用直方图变体：400 棵、对数目标、早停。</dd>
+  <dt>递归预测</dt><dd>预测第 1 天 → 把它当"已知"再预测第 2 天 → … 滚动到第 14 天。像下棋连推十四步。</dd>
+  <dt>马尔可夫链</dt><dd>"明天只取决于今天"的概率模型。这里：四档拥挤状态之间的流转概率表。</dd>
+  <dt>Erlang-C / M/M/c</dt><dd>排队论经典公式：随机到达、c 个柜台、固定服务速度时，平均要等多久。</dd>
+  <dt>蒙特卡洛</dt><dd>用大量随机抽样回答"结果大概会怎样"：抽 3000 个"可能的当天"，数一数多少天排队超半小时。</dd>
+  <dt>TF-IDF / 逻辑回归</dt><dd>前者把文字变成数字向量（稀有词权重高）；后者最简单常用的分类器，这里判断好评/差评。</dd>
+  <dt>回测 / RMSE / MAPE</dt><dd>回测=用历史"模拟考试"（只用当时可知的数据）；RMSE=平均误差（人数）；MAPE=平均百分比误差。</dd>
+  <dt>P50 / P85 / P95 / 分位数</dt><dd>"把 100 天按大小排队，第 50/85/95 名的值"。用来定拥挤档位边界和预测区间，比单一均值更能表达不确定性。</dd>
+  <dt>随机种子（seed）</dt><dd>给随机数发生器定的"起点"。种子相同（本项目 7005），每次抽样的结果完全一样——演示可复现的关键。</dd>
+  <dt>PWA / Service Worker / manifest</dt><dd>PWA=能装进手机、可离线的网页；Service Worker=浏览器里的缓存管家；manifest=安装信息卡。</dd>
+  <dt>cache-first / network-first</dt><dd>两种取文件策略：先查缓存（快）/ 先联网拿新（鲜）。本项目外壳用前者、数据用后者。</dd>
+  <dt>无障碍（a11y）</dt><dd>让读屏软件、色弱用户也能用：语义标签、文字标注、高对比。项目有专门测试脚本把关。</dd>
+</dl>
+
+<h2 class="q" id="s8">8｜六个测试分别在守什么</h2>
+<p>都在 <span class="f">_build/</span> 里，Playwright 驱动真浏览器（无头 Edge）访问本地服务，模拟真实手机视口（375×812、可触摸）。</p>
+<table>
+  <tr><th style="width:220px">脚本</th><th>它做的事</th></tr>
+  <tr><td><span class="f">local_test.js</span></td><td>主冒烟测试：打开 App，点开"今天"的日历格，逐项检查详情弹层——逐小时条有没有画、"现在"时间线、最佳窗口标记、最近实测值、马尔可夫行、景点页卡片，并截图存档。</td></tr>
+  <tr><td><span class="f">cmp_test.js</span></td><td>对比页秩序：带"推荐"标记的口岸卡片必须排在第一位——保证用户第一眼看到的就是当日最佳选择。</td></tr>
+  <tr><td><span class="f">lang_test.js</span></td><td>三语一致性：繁/簡/EN 每种语言下，每个界面的文案都完整、无漏译、无串页。</td></tr>
+  <tr><td><span class="f">en_label_check.js</span></td><td>英文模式专项：口岸名等长标签不许被截断、页面不许横向溢出（英文比中文长，最容易撑破布局）；有问题时以非零退出码报错。</td></tr>
+  <tr><td><span class="f">a11y_test.js</span></td><td>无障碍体检：图片有替代文字、按钮有语义标签、对比度达标——读屏软件可用的底线。</td></tr>
+  <tr><td><span class="f">shots.js</span></td><td>给各页签拍标准截图，存入 shots/，用于报告、演示和前后对比。</td></tr>
+</table>
+<p class="meta">运行方式：先 <span class="f">python -m http.server 8931 -d docs</span>，再逐个 <span class="f">node _build/xxx_test.js</span>。
+六个全绿 = 界面行为与设计一致。</p>
+
+<h2 class="n" id="s9">9｜数字速查（答辩前扫一眼）</h2>
+<table>
+  <tr><th>维度</th><th>数字</th></tr>
+  <tr><td>口岸 × 方向</td><td>8 个陆路口岸 × 进/出 = <b>16 条序列</b>（沙头角因数据量小被筛选规则排除）</td></tr>
+  <tr><td>原始数据</td><td>3.4 MB · 约 6.3 万行 · 2021-01 至今 · 入境处每日公布</td></tr>
+  <tr><td>训练面板</td><td>21,541 行 · <b>56 个特征</b> · 16 序列合并训练</td></tr>
+  <tr><td>主模型</td><td>400 棵直方图梯度提升树 · 对数目标 · 早停 · 递归 14 天</td></tr>
+  <tr><td>异常清洗</td><td>411 天被标记剔除（双闸门：LOF&gt;1.3 且前 1.5%）</td></tr>
+  <tr><td>回测</td><td>5 个窗口 × 14 天 × 16 序列 = <b>1,120 条预测</b>；RMSE 8,764（基线 12,743，−31%；sklearn 对照 13,209）；档位命中 64.3%，±1 档 95.2%</td></tr>
+  <tr><td>排队模拟</td><td>3,000 次抽样 · 最忙小时占全天 12% · 每人 30 秒 · ρ≥0.97 转饱和模拟 · 封顶 120 分钟 · 种子 7005</td></tr>
+  <tr><td>情感分析</td><td>161,442 训练 / 17,939 测试条真实评论 · TF-IDF + 类平衡逻辑回归</td></tr>
+  <tr><td>产品</td><td>5 个页签 · 3 语 · data.json 60 KB（224 行预测）· 全离线</td></tr>
+  <tr><td>质量保障</td><td>6 个浏览器回归测试 · 12 张报告图 · 全部假设在"关于"页公开</td></tr>
+</table>
+
+<h2 class="n" id="s10">10｜常见问答</h2>
+<div class="qa-list">
+  <p><b>Q1 没网为什么还能用？</b><br>第一次打开时 sw.js 把界面和 data.json 全部存进手机；之后 data.json 在线优先拿新、离线用缓存，外壳永远从本地读。所以站在罗湖口岸没信号也查得到。</p>
+  <p><b>Q2 预测凭什么可信？</b><br>滚动回测只允许使用"当时可知"的数据：5 个时点、每个都用之前的数据重训（连异常清洗都重算），共 1,120 条预测的误差比"按星期几估"低 31%，也优于 sklearn 对照实现。数字出自 backtest.py，报告图 fig05 同源。</p>
+  <p><b>Q3 明天刮台风怎么办？</b><br>模型不预测天气与突发管制：异常日被 LOF 从训练中剔除，"关于"页明示此边界。它回答的是"按历史规律，哪天相对顺"。</p>
+  <p><b>Q4 "每小时人数"是官方数据吗？</b><br>不是。入境处不公布分时数据。产品用"口岸类型 × 方向 × 星期几"的日内模板给出一天 24 小时的形状，再按当日预测总量缩放——假设在关于页公开。</p>
+  <p><b>Q5 景点评论是真的吗？</b><br>判断"好评/差评"的模型只用 16 万条真实带标签评论训练；App 内展示的香港景点评论是明确标注的演示语料（授权与体量原因不随包分发）。</p>
+  <p><b>Q6 手机里算的和电脑一致吗？</b><br>排队模拟是同一套 Erlang-C + 蒙特卡洛：同常数、同随机种子（7005），两端结果可互相复现——这是把模拟放进浏览器的前提。</p>
+  <p><b>Q7 为什么整套算法基于 NumPy 与原生 JS？</b><br>两个原因：数值逻辑全程透明、可逐行审查；排队模拟因此能在浏览器端原样复现。sklearn 只作外部对照基准，不进产品。</p>
+  <p><b>Q8 被问到某段代码答不上来怎么办？</b><br>先在 §2 全景图指出它的位置和上下游，再讲它解决什么问题、为什么这么设计；每个文件开头都有中文说明。讲清"为什么"比背"怎么写"更得分。</p>
+</div>
+
+<h2 class="q" id="s11">11｜个人问答环节：最可能被问的 29 题（英文回答 + 中文对照）</h2>
+<div class="note"><b>考核规则（摘自项目说明 §5.3/§6）：</b>每人约 <b>30 分钟</b>，在机房<b>单独</b>进行（11-17 至 11-22）；<b>AI 会协同考官分析你们提交的报告和代码来出题</b>，最终由考官定题；题目可覆盖项目的<b>任何组件</b>——不限于贡献声明里你负责的部分——包括设计选择、建模、实现、代码、结果、局限与 AI 使用；评分标准是回答<b>准确、有批判性、独立</b>。答题模板：<b>先定位</b>（在流水线哪一步）→ <b>再讲选择</b>（为什么这么做、试过什么别的）→ <b>后给证据</b>（数字 / 图 / 测试）。以下每题都按这个结构组织。<b>每组开头的题是"大局版"问法（问得宽、说得简），几乎必考，先练到脱口而出；越往后的题问得越细。</b></div>
+
+<h3 style="margin:22px 0 4px" id="qg1">① 开场大局题 · Almost-certain openers</h3>
+<div class="file dt vqa">
+  <h3>Q1 · Tell me about your project. What does it do?<br>（介绍一下你们的项目，它是做什么的？）</h3>
+  <p class="ven"><b>EN:</b> BorderPulse is a mobile web app that helps travellers avoid congestion at Hong Kong's land border control points. You open it, pick northbound or southbound, and see a 14-day congestion calendar for eight crossings, a same-day comparison of ports, a live queue-risk simulation, and ranked attractions for days when no crossing is calm. It works fully offline on a phone, in three languages.</p>
+  <p class="vcn"><b>中文：</b>BorderPulse 是一个手机网页应用，帮过关人士错峰通行。打开后选择北上或南下，就能看到 8 个口岸未来 14 天的拥挤日历、同日口岸对比、浏览器里现场跑的排队风险模拟，以及"没有一天顺"时可选的景点推荐。手机上三语、完全离线可用。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q2 · How is the project implemented? Give me the big picture.<br>（项目是怎么实现的？给我讲个大框架。）</h3>
+  <p class="ven"><b>EN:</b> It is a two-track system. Offline, a Python pipeline turns official Immigration Department daily statistics into everything the product needs — anomaly cleaning, a pooled gradient-boosted-tree forecast over 16 port-by-direction series for the next 14 days, a Markov model of four congestion bands, and a Monte Carlo queue model — and packs the outputs into a 60-kilobyte data.json. Online, a progressive web app renders that file; the only computation in the browser is the queue simulation, re-implemented in JavaScript with the same constants and seed.</p>
+  <p class="vcn"><b>中文：</b>双轨实现。离线端，一条 Python 流水线把入境处官方日统计变成产品所需的一切——异常清洗、合并训练的梯度提升树预测 16 条"口岸×方向"序列未来 14 天、四档拥挤的马尔可夫模型、蒙特卡洛排队模型——全部产出打包成 60 KB 的 data.json。在线端，一个 PWA 前端渲染这个文件；浏览器里唯一的计算是排队模拟，用同一套常数和种子以 JavaScript 重写。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q3 · What models or methods did you use?<br>（你们用了哪些模型和方法？）</h3>
+  <p class="ven"><b>EN:</b> Five main ones. Local outlier factor with a two-gate rule for cleaning; gradient-boosted regression trees on 56 calendar and lag features for forecasting; a self-calibrated Markov chain over four congestion bands; an Erlang-C Monte Carlo simulation for queue risk; and TF-IDF with class-balanced logistic regression for review sentiment. All are implemented in NumPy, with scikit-learn kept strictly as a labelled benchmark.</p>
+  <p class="vcn"><b>中文：</b>五个主力方法：双闸门的局部异常因子做清洗；56 个日历与滞后特征上的梯度提升回归树做预测；自校准的四档马尔可夫链；Erlang-C 蒙特卡洛排队模拟；TF-IDF 加类平衡逻辑回归做评论情感。全部用 NumPy 实现，sklearn 只作标注清楚的对照基准。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q4 · What data is the project built on?<br>（项目用什么数据做的？）</h3>
+  <p class="ven"><b>EN:</b> The core is the Immigration Department's daily passenger statistics on data.gov.hk — about 63,000 rows from 2021 to now, one count per control point, direction and day. Around it we use a hand-built holiday calendar for both sides of the border, C&amp;ED annual throughput as a capacity sanity anchor, and a Kaggle TripAdvisor corpus of over 160,000 labelled reviews for the sentiment model. Every source is documented with links and verification notes in data/SOURCES.md.</p>
+  <p class="vcn"><b>中文：</b>核心是 data.gov.hk 上入境处的每日过关人次——2021 年至今约 6.3 万行，每行是"口岸×方向×日期"的一个人数。外围有手工整理的两地假期日历、海关年度通关量（容量合理性锚点）、以及训练情感模型的 16 万多条带标签 Kaggle TripAdvisor 评论。每个来源的链接与核验记录都在 data/SOURCES.md。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q5 · What was your own contribution?<br>（你个人负责哪部分？）</h3>
+  <p class="ven"><b>EN:</b> My primary part was <mark>〔the components listed under my name in the contribution statement〕</mark>. Because this session can cover anything, I also went through the whole pipeline — for instance, if you ask me about a module another member led, I can explain how it works and why we built it that way.</p>
+  <p class="vcn"><b>中文：</b>我主要负责的就是贡献声明里列在我名下的那些部分。因为问答可覆盖任何部分，我也把整条流水线过了一遍——即使问到其他组员主导的模块，我也能讲清它怎么工作、为什么这么做。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q6 · How do you know the product actually works?<br>（怎么证明产品是有效的？）</h3>
+  <p class="ven"><b>EN:</b> Two kinds of evidence. At the model level, a rolling-origin backtest — five windows of 14 days, 1,120 predictions in total — where our forecast cuts RMSE by about a third against a weekday-median baseline and also beats a labelled scikit-learn configuration. At the product level, six browser regression tests run against the real app, and every assumption is disclosed on the About page.</p>
+  <p class="vcn"><b>中文：</b>两类证据。模型层面：滚动起点回测，5 个 14 天窗口、共 1,120 条预测，RMSE 比"星期几中位数"基线低约三分之一，也优于标注的 sklearn 对照配置。产品层面：6 个浏览器回归测试对着真实 App 跑，所有假设都在"关于"页公开。</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="qg2">② 设计选择 · Design choices</h3>
+<div class="file dt vqa">
+  <h3>Q7 · Why did you build this? Who is it for?<br>（为什么做这个产品？给谁用？）</h3>
+  <p class="ven"><b>EN:</b> Crossing Hong Kong's land border on a bad day means hours of queueing, and the official data that would help avoid it is published but hard to use as raw tables. The product turns that data into a decision: cross-border commuters and weekend travellers get a 14-day calendar, a port comparison and a queue-risk number, all on one page that works offline.</p>
+  <p class="vcn"><b>中文：</b>香港陆路口岸赶上高峰要排几个小时队；官方其实公布了数据，但原始表格没人能直接拿来决策。产品把数据变成决策：跨境通勤者和周末旅客在一页里看到 14 天日历、口岸对比和排队风险，还支持离线使用。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q8 · How does the app decide a day is good or bad?<br>（App 怎么判断某天顺不顺？）</h3>
+  <p class="ven"><b>EN:</b> Each port-and-direction series is forecast for the next 14 days, and every forecast day is placed into one of four bands — Smooth, Normal, Busy, Packed — using thresholds calibrated from that port's own history. The calendar simply colours the grid by band, so the judgement is visible at a glance.</p>
+  <p class="vcn"><b>中文：</b>每条"口岸×方向"序列预测未来 14 天，每天的预测值按该口岸自身历史校准的四档阈值（顺/缓/忙/爆）归档。日历只是把档位涂成颜色，判断结果一眼可见。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q9 · Why forecast daily volume per port and direction, and why 14 days?<br>（为什么预测"每个口岸×每个方向"的日人数？为什么是 14 天？）</h3>
+  <p class="ven"><b>EN:</b> The product serves a traveller choosing when and where to cross, and that decision is made days ahead. ImmD publishes one number per port, direction and day, so daily volume per series is the natural target, and fourteen days covers two weekends plus a public holiday — the realistic planning window.</p>
+  <p class="vcn"><b>中文：</b>产品服务的是"挑哪天、走哪个口岸"的决策，而决策往往提前几天做出。入境处每个口岸×方向×日期只公布一个人数，所以每条序列的日总量是天然目标；14 天正好覆盖两个周末加一个假期，是真实的规划窗口。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q10 · Why gradient-boosted trees rather than a classical time-series model?<br>（为什么用梯度提升树，而不是经典时序模型？）</h3>
+  <p class="ven"><b>EN:</b> Border flow is calendar-driven rather than trend-driven: peaks come from holidays, weekdays and their interactions, with abrupt regime shifts such as the February 2023 reopening. Trees learn these nonlinear effects directly from date features, with no differencing or stationarity assumptions. The rolling backtest confirmed the choice — RMSE 8,764 against 12,743 for the weekday-median baseline.</p>
+  <p class="vcn"><b>中文：</b>口岸人流由日历驱动而非趋势驱动：高峰来自假期、星期几及它们的交互，还有 2023 年 2 月复关这类突变。树模型直接从日期特征里学这些非线性效应，不需要差分、不需要平稳性假设。滚动回测验证了这个选择——RMSE 8,764，对比"按星期几取中位数"基线的 12,743。</p>
+</div>
+<div class="file dt vqa">
+  <h3>Q11 · How were the four congestion bands defined?<br>（四个拥挤档位是怎么定的？）</h3>
+  <p class="ven"><b>EN:</b> They are self-calibrated per series from that series' own recent daily distribution, using the P50, P85 and P95 quantiles as cut points, so "busy" means busy relative to the port's own history rather than an absolute number. The same thresholds feed the Markov chain, which models how congestion moves between bands from one day to the next.</p>
+  <p class="vcn"><b>中文：</b>四档由每条序列自己近期的日总量分布自校准，用 P50/P85/P95 三个分位数做切点，所以"忙"是相对该口岸自身历史而言，不是绝对人数。同一组切点喂给马尔可夫链，刻画拥挤在档位之间的逐日流转。</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="qg3">③ 模型细节 · Modelling details</h3>
+<div class="file py vqa">
+  <h3>Q14 · Explain the anomaly cleaning. Why two gates?<br>（讲讲异常清洗。为什么要两道闸门？）</h3>
+  <p class="ven"><b>EN:</b> We run local outlier factor on log volumes. A single threshold over-flagged quiet series, where small absolute spikes are large in relative terms, so a day is removed only if it passes both gates — LOF above 1.3 <i>and</i> a score in the top 1.5 percent. That flagged 411 days, and inspecting them shows real disruptions: Saola, the September 2023 black rainstorm, and Yagi.</p>
+  <p class="vcn"><b>中文：</b>我们对对数人流做局部异常因子检测。单一阈值会误伤安静的序列——绝对量很小的波动在相对意义上也很大——所以一天要同时过两道闸门才剔除：LOF&gt;1.3 且得分排前 1.5%。共标记 411 天，逐一核验都是真实事件：台风苏拉、2023 年 9 月黑雨、台风摩羯。</p>
+</div>
+<div class="file py vqa">
+  <h3>Q15 · What goes into the 56 features?<br>（56 个特征都有什么？）</h3>
+  <p class="ven"><b>EN:</b> Calendar features — weekday, holiday flags and festivity windows for both sides of the border — plus lag terms, rolling means and a reopening-anchored time index. All sixteen series are pooled into one panel of 21,541 rows, so scarce holiday evidence is shared across ports instead of being seen by one series alone.</p>
+  <p class="vcn"><b>中文：</b>日历特征（星期几、两地假期标记、节庆窗口），加滞后项、滚动均值和以复关为锚的时间索引。16 条序列合并成 21,541 行的训练面板，让稀缺的假期样本在口岸之间共享，而不是只被某一条序列见过。</p>
+</div>
+<div class="file py vqa">
+  <h3>Q16 · Why a log target, and why early stopping?<br>（为什么对目标取对数？为什么早停？）</h3>
+  <p class="ven"><b>EN:</b> Ports differ by an order of magnitude in volume; taking logs turns absolute errors into relative ones, so a single pooled model serves all series. Early stopping on a chronological holdout with patience 40 keeps the 400 trees from memorising holiday spikes that appear only a few times in the data.</p>
+  <p class="vcn"><b>中文：</b>各口岸体量相差一个数量级，取对数把绝对误差变成相对误差，一个合并模型就能服务全部序列。按时间顺序留出验证集做早停（耐心值 40），防止 400 棵树把数据里只出现过几次的假期尖峰"背下来"。</p>
+</div>
+<div class="file py vqa">
+  <h3>Q17 · There is no official queue data. Where do the queue parameters come from?<br>（没有官方排队数据，排队模型的参数从哪来？）</h3>
+  <p class="ven"><b>EN:</b> They are self-calibrated from the same ImmD series. Counter capacity comes from the P90 day at 95 percent utilisation with a floor of four counters; service takes 30 seconds per person; and once utilisation reaches 0.97 the simulation switches to a saturated regime whose wait follows a triangular distribution capped at 120 minutes. Three thousand draws with a fixed seed then give the probability of waiting more than 30 minutes.</p>
+  <p class="vcn"><b>中文：</b>全部从同一份入境处序列自校准。柜台数按 P90 日负荷、95% 利用率反推，下限 4 个；服务速率每人 30 秒；利用率一旦达到 0.97 就切换到饱和模式，等待时长用三角分布（20/45/120 分钟）封顶。再用固定种子的 3,000 次抽样，得到"排队超 30 分钟"的概率。</p>
+</div>
+<div class="file py vqa">
+  <h3>Q18 · Explain the sentiment pipeline and its corpus.<br>（讲讲情感分析这条线，以及语料情况。）</h3>
+  <p class="ven"><b>EN:</b> TF-IDF over unigrams and bigrams with negation-scope tokens, then a class-balanced logistic regression, trained on 161,442 real labelled TripAdvisor reviews and tested on 17,939 held-out ones — accuracy 0.970, against 0.974 for the labelled scikit-learn benchmark. The Hong Kong reviews shown inside the app are a clearly labelled synthetic demonstration set, because the real corpus cannot be redistributed under its licence.</p>
+  <p class="vcn"><b>中文：</b>对一元和二元词组做 TF-IDF，加入否定辖域标记，再接类平衡逻辑回归；用 161,442 条真实带标签的 TripAdvisor 评论训练、17,939 条留出评论测试，准确率 0.970，对照的 sklearn 基准为 0.974。App 内展示的香港评论是明确标注的合成演示语料，因为真实语料按授权条款不能随包分发。</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="qg4">④ 代码实现 · Code walkthrough</h3>
+<div class="file fe vqa">
+  <h3>Q21 · Walk me through <span class="f">src/build_docs.py</span>.<br>（带我从头讲一遍总调度文件。）</h3>
+  <p class="ven"><b>EN:</b> It is the one-command orchestrator. It loads the CSV, filters series by the 45-day and median-50 rules, cleans anomalies, builds the feature panel, trains one pooled GBT, forecasts each series recursively for fourteen days, derives the Markov bands and intraday templates, and assembles everything into the 60-kilobyte data.json that the app reads.</p>
+  <p class="vcn"><b>中文：</b>它是一条命令的总调度：读入 CSV → 按"数据 ≥45 天且日均 ≥50 人"筛选序列 → 异常清洗 → 构建特征面板 → 训练一个合并 GBT → 逐序列递归预测 14 天 → 导出马尔可夫档位与分时模板 → 全部组装成 App 读取的 60 KB data.json。</p>
+</div>
+<div class="file fe vqa">
+  <h3>Q22 · Why is there no Python in the app itself?<br>（为什么 App 里没有 Python？）</h3>
+  <p class="ven"><b>EN:</b> All heavy computation happens at build time on the computer, and the app ships only its compact outputs. The one exception is the queue simulation, re-implemented in JavaScript with the same constants and the same seed, so it runs offline in the browser and reproduces the Python numbers exactly.</p>
+  <p class="vcn"><b>中文：</b>所有重计算在建包时于电脑上完成，App 只携带轻量产物。唯一的例外是排队模拟——用同一套常数、同一个随机种子以 JavaScript 重写，因此能在浏览器里离线运行，且结果与 Python 端完全一致。</p>
+</div>
+<div class="file fe vqa">
+  <h3>Q23 · How do you know a change hasn't broken anything?<br>（怎么保证改了代码没改坏东西？）</h3>
+  <p class="ven"><b>EN:</b> Six regression scripts in the _build directory drive the real app in headless Edge against a local server, covering the calendar, the compare-page ordering, language switching and label overflow. At the pipeline level, reruns are reproducible to the byte, and the metrics in backtest.json serve as the reference.</p>
+  <p class="vcn"><b>中文：</b>_build 目录下的 6 个回归脚本用无头 Edge 对着本地服务运行真实 App，覆盖日历、对比页排序、语言切换和标签溢出。流水线层面，重跑做到逐字节可复现，backtest.json 里的各项成绩就是基准参照。</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="qg5">⑤ 结果与局限 · Results and limitations</h3>
+<div class="file qa vqa">
+  <h3>Q26 · Your model beat the scikit-learn implementation. Why?<br>（你们的模型为什么跑赢了 sklearn 实现？）</h3>
+  <p class="ven"><b>EN:</b> In our backtest configuration, yes — 8,764 versus 13,209 RMSE. The reason lies in the forecasting regime rather than the algorithm class: our implementation uses early stopping and conservative histogram regularisation tuned for recursive multi-step prediction under drift, while the library defaults under-regularise in this setting. We report it as a configuration finding, and scikit-learn remains strictly a labelled benchmark.</p>
+  <p class="vcn"><b>中文：</b>在我们的回测配置里确实如此——RMSE 8,764 对 13,209。原因在预测范式而非算法大类：我们的实现用了早停和偏保守的直方图正则，专门针对漂移环境下的递归多步预测；库的默认配置在这种场景正则不足。我们把它作为配置层面的发现写进报告，sklearn 始终只作标注清楚的对照基准。</p>
+</div>
+<div class="file qa vqa">
+  <h3>Q27 · What are the main limitations?<br>（项目的主要局限是什么？）</h3>
+  <p class="ven"><b>EN:</b> Four honest ones. There is no official hourly data, so the intraday curves are labelled model estimates. C&amp;ED publishes only annual throughput, so queue capacity is self-calibrated. Weather is deliberately excluded to keep results reproducible. And the queue model is a simplified single-pool abstraction of many separate counters. All four are disclosed on the product's About page.</p>
+  <p class="vcn"><b>中文：</b>四条实话：没有官方分时数据，逐小时曲线是明确标注的模型估算；海关只公布年度通关量，排队容量属于自校准；为保证结果可复现，刻意不接入天气；排队模型是把众多柜台抽象成单队列的简化模型。四条全部公示在产品的"关于"页。</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="qg6">⑥ AI 使用 · Use of AI</h3>
+<div class="file ne vqa">
+  <h3>Q29 · How did the group use AI, and how do you defend AI-assisted code?<br>（小组怎么用 AI？AI 写的代码你如何辩护？）</h3>
+  <p class="ven"><b>EN:</b> As declared in the report: Li Baixi used Claude Code and GLM through a VSCode extension to draft code, then modified and debugged it himself and wrote part of the NumPy functions himself; Lin Jingyu and Lu Zengyi used Doubao and DeepSeek as chat assistants in the same drafting-and-correcting loop. Whichever member typed a line, each of us can locate it on the pipeline diagram, explain why it is there, and point to the test or figure that validates it.</p>
+  <p class="vcn"><b>中文：</b>与报告声明一致：李柏熙通过 VSCode 插件使用 Claude Code 与 GLM 起草代码，随后自己修改调试、并亲手编写了部分 NumPy 函数；林靖宇、卢曾益以问答聊天方式使用豆包和 DeepSeek，同样走"起草—修改—调试"的流程。无论某一行是谁敲下的，每个组员都能在全景图上指出它的位置、说明它存在的理由、并指向验证它的测试或图表。</p>
+</div>
+
+
+<h2 class="n" id="s12">12｜想亲眼看它跑一遍？</h2>
+<p>装好 Python 3.10+ 与 numpy / pandas 后，在项目根目录：</p>
+<table>
+  <tr><th>命令</th><th>会发生什么</th></tr>
+  <tr><td><span class="f">python src/build_docs.py</span></td><td>完整流水线跑一遍（几分钟），重新生成 docs/data.json——控制台会打印每个阶段的进度。</td></tr>
+  <tr><td><span class="f">python -m http.server -d docs</span></td><td>本机起一个服务，浏览器开 http://localhost:8000 就是完整的 App。</td></tr>
+  <tr><td><span class="f">python src/backtest.py</span></td><td>跑一次"模拟考试"，输出三选手成绩到 report/backtest.json。</td></tr>
+  <tr><td><span class="f">python src/make_figures.py</span></td><td>重画 12 张报告图（fig06 要重训一次模型，约 3 分钟）。</td></tr>
+</table>
+<p class="meta">注：<span class="f">src/models/nlp.py</span> 需要另行下载 Kaggle 评论 CSV（授权原因不随包分发）；六个界面测试需要 Node.js 与 playwright-core。</p>
+
+<h2 class="n" id="s13">13｜一页总表：33 个文件对号入座</h2>
+<table>
+  <tr><th style="width:250px">文件</th><th>一句话职责</th></tr>
+  <tr><td colspan="2" style="background:#f7f5ee"><b>根目录</b></td></tr>
+  <tr><td><span class="dot d-ne"></span><span class="f">README.md</span></td><td>项目名片与运行指南</td></tr>
+  <tr><td colspan="2" style="background:#f7f5ee"><b>data/ · 原始数据</b></td></tr>
+  <tr><td><span class="dot d-dt"></span><span class="f">data/SOURCES.md</span></td><td>五个数据源的链接、用途与核验记录</td></tr>
+  <tr><td><span class="dot d-dt"></span><span class="f">data/raw/immd_daily.csv</span></td><td>入境处每日人次（6.3 万行，唯一原始数据）</td></tr>
+  <tr><td colspan="2" style="background:#f7f5ee"><b>src/ · Python 流水线</b></td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/build_docs.py</span></td><td>总调度：CSV → 清洗 → 特征 → 预测 → 打包 data.json</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/lof.py</span></td><td>双闸门异常检测，剔台风/暴雨日（411 天）</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/features.py</span></td><td>56 列特征与合并训练面板</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/gbt.py</span></td><td>主力预测：400 棵树递归 14 天</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/markov.py</span></td><td>四档拥挤状态流转概率</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/mc_queue.py</span></td><td>Erlang-C + 蒙特卡洛排队风险</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/nlp.py</span></td><td>评论情感模型 → nlp.json</td></tr>
+  <tr><td><span class="dot d-py"></span><span class="f">src/models/__init__.py</span></td><td>包入口（两行说明），无逻辑</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">src/backtest.py</span></td><td>滚动起点回测，三选手比误差</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">src/make_figures.py</span></td><td>报告 12 张插图工厂</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">src/make_icons.py</span></td><td>生成全套 PWA 图标</td></tr>
+  <tr><td><span class="dot d-dt"></span><span class="f">report/backtest.json</span></td><td>回测成绩单（供画图引用）</td>（backtest.py 产出）</tr>
+  <tr><td colspan="2" style="background:#f7f5ee"><b>docs/ · 前端应用</b></td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/index.html</span></td><td>骨架：空页签 + 导航 + 静态"关于"兜底</td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/app.js</span></td><td>大脑：五页渲染 + 浏览器排队模拟 + 三语</td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/styles.css</span></td><td>外观：色阶、卡片、明暗主题</td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/sw.js</span></td><td>缓存管家：外壳 cache-first / 数据 network-first</td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/manifest.webmanifest</span></td><td>安装信息（名字/主题色/图标）</td></tr>
+  <tr><td><span class="dot d-fe"></span><span class="f">docs/icons/（5 个 PNG）</span></td><td>各尺寸图标</td>（make_icons.py 脚本生成）</tr>
+  <tr><td><span class="dot d-dt"></span><span class="f">docs/data.json</span></td><td>App 燃料：224 行预测 + 分时 + 档位 + 实测</td>（build_docs.py 产出）</tr>
+  <tr><td><span class="dot d-dt"></span><span class="f">docs/nlp.json</span></td><td>景点好评率与关键词</td>（nlp.py 产出）</tr>
+  <tr><td colspan="2" style="background:#f7f5ee"><b>_build/ · 界面回归测试</b></td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">local_test.js</span></td><td>当日详情弹层逐项体检</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">cmp_test.js</span></td><td>对比页推荐卡必须第一</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">lang_test.js</span></td><td>三语文案一致性</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">en_label_check.js</span></td><td>英文不截断、不横向溢出</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">a11y_test.js</span></td><td>无障碍底线检查</td></tr>
+  <tr><td><span class="dot d-qa"></span><span class="f">shots.js</span></td><td>标准截图存档</td></tr>
+</table>
+<p class="sub" style="margin-top:26px">— 导读完 · 配套文件：BorderPulse_code.zip（提交代码包）、figs/（报告图）、reportfinal.docx（报告）、Group_contribution_statement.docx（贡献声明）—</p>
+
+</main>
+<script>
+(function(){
+  var b=document.getElementById('tocBtn'),t=document.getElementById('toc');
+  if(b)b.addEventListener('click',function(){t.classList.toggle('open')});
+  t.addEventListener('click',function(e){if(e.target.tagName==='A')t.classList.remove('open')});
+  var links=[].slice.call(t.querySelectorAll('a')),map={};
+  links.forEach(function(a){map[a.getAttribute('href').slice(1)]=a});
+  var io=new IntersectionObserver(function(es){es.forEach(function(en){
+    if(en.isIntersecting){links.forEach(function(x){x.classList.remove('on')});
+      var a=map[en.target.id];if(a)a.classList.add('on');}
+  })},{rootMargin:'-15% 0px -70% 0px'});
+  Object.keys(map).forEach(function(id){var el=document.getElementById(id);if(el)io.observe(el)});
+})();
+</script>
+</body>
+</html>
