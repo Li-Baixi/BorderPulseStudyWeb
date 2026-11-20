@@ -60,6 +60,8 @@
   .vqa .ven{margin:6px 0}
   .vqa .vcn{color:var(--sub);font-size:14px;border-top:1px dashed var(--line);
             margin-top:6px;padding-top:7px}
+  .vcode{font-size:13px;color:var(--sub);border-top:1px dashed var(--line);
+         margin-top:6px;padding-top:6px}
   mark{background:#fff3bf;padding:0 3px;border-radius:3px}
   .fig-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
   .fig-grid figure{margin:0}
@@ -105,8 +107,15 @@
   <a class="g" href="#qg4">④ 代码实现</a>
   <a class="g" href="#qg5">⑤ 结果与局限</a>
   <a class="g" href="#qg6">⑥ AI 使用</a>
-  <a href="#s12">12｜亲眼看它跑</a>
-  <a href="#s13">13｜一页总表</a>
+  <a href="#s12"><b>12｜项目详解（双语）</b></a>
+  <a class="g" href="#d0">⓪ 应用栏（共用）</a>
+  <a class="g" href="#d1">① 日历页</a>
+  <a class="g" href="#d2">② 对比页</a>
+  <a class="g" href="#d3">③ 排队页</a>
+  <a class="g" href="#d4">④ 景点页</a>
+  <a class="g" href="#d5">⑤ 关于页</a>
+  <a href="#s13">13｜亲眼看它跑</a>
+  <a href="#s14">14｜一页总表</a>
 </nav>
 <button id="tocBtn" aria-label="打开目录">☰</button>
 <main>
@@ -120,9 +129,9 @@
 
 <h2 id="s0">0｜三种读法，按时间选</h2>
 <div class="tracks">
-  <div class="track"><b>⏱ 10 分钟版</b>只看 §1 项目是什么 → §2 全景图 → §13 一页总表。读完能说出每个文件的名字和一句话职责。</div>
+  <div class="track"><b>⏱ 10 分钟版</b>只看 §1 项目是什么 → §2 全景图 → §14 一页总表。读完能说出每个文件的名字和一句话职责。</div>
   <div class="track"><b>⏱ 40 分钟版</b>加上 §4 逐文件卡片和 §7 小词典。读完能讲出每条流水线步骤在解决什么问题。</div>
-  <div class="track"><b>⏱ 2 小时版 / <span style="color:#b3541e">问答备考版</span></b>再加上 §8–§11（测试、数字速查、常见问答、<b>个人问答备考</b>），并对照真实文件看头部注释。三人都要过一遍 §11——考官可问任何组件，不限分工。</div>
+  <div class="track"><b>⏱ 2 小时版 / <span style="color:#b3541e">问答备考版</span></b>再加上 §8–§12（测试、数字速查、常见问答、<b>个人问答备考</b>、<b>项目详解</b>），并对照真实文件看头部注释。三人都要过一遍 §11 和 §12——考官可问任何组件，不限分工。</div>
 </div>
 
 <h2 id="s1">1｜这个项目是什么</h2>
@@ -786,7 +795,124 @@
 </div>
 
 
-<h2 class="n" id="s12">12｜想亲眼看它跑一遍？</h2>
+<h2 class="f" id="s12">12｜项目详解：从界面到代码，一页一页讲（双语）</h2>
+<p>这一节沿着<b>用户界面</b>走：按"应用栏 → 日历 → 对比 → 排队 → 景点 → 关于"的页面顺序，从上到下、从外到内。每张卡片固定三层：<b>界面功能</b>（用户看到什么）→ <b>实现方法</b>（怎么做到的）→ <b>代码位置</b>（哪个文件、哪个函数）。英文段在前、中文对照在后，可直接当问答环节的口头材料。§3 看的是"产品长什么样"，§4 按<b>文件</b>精讲；本节按<b>屏幕</b>讲，两相对照效果最好。行号为当前版本约数，以在 <span class="f">docs/app.js</span> 里搜索函数名为准。</p>
+
+<h3 style="margin:22px 0 4px" id="d0">⓪ 应用栏 · App bar（五页共用）</h3>
+<div class="file fe vqa">
+  <h3>D1 · The app bar: name and mission<br>（标题栏：产品叫什么、为谁服务）</h3>
+  <p class="ven"><b>EN:</b> The bar at the top carries the pulse logo and the product name, and it is where you state the mission if asked: BorderPulse is a forecast-first companion for the Hong Kong–Mainland land borders — it tells cross-border commuters, weekend travellers and holiday returnees which port, which day and which hour are likely to be smooth. The bar itself is static structure in docs/index.html; JavaScript only fills in the status line beneath the title.</p>
+  <p class="vcn"><b>中文：</b>顶栏放的是脉搏标志和产品名；被问"这是什么"就从这里答起：BorderPulse 是面向港深陆路口岸的"预测优先"出行助手，服务跨境通勤、周末出行和假日返乡人群，回答"哪个口岸、哪一天、哪个时段更顺"。顶栏本身是 docs/index.html 里的静态结构（#appbar），JS 只负责填标题下的状态行。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/index.html</span>（搜 #appbar）＋ <span class="f">docs/app.js</span> · renderChrome()（约 L311）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D2 · The status line: measurement vs forecast<br>（状态行：实测与预测的分界线）</h3>
+  <p class="ven"><b>EN:</b> Under the title a small line reads, for example, "data through 2026-11-19". It is the boundary between measurement and forecast: up to that date the app shows observed daily crossings, after it model forecasts. renderChrome() fills the line from the data_through field of data.json, so the app never lets a forecast pass as an observation.</p>
+  <p class="vcn"><b>中文：</b>标题下方一行小字，如"数据截至 2026-11-19"。这是实测与预测的分界线：这天之前是观测到的每日过关量，之后是模型预测值。renderChrome() 从 data.json 的 data_through 字段填入这一行——App 从不让预测冒充实测。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/index.html</span>（#meta）· <span class="f">docs/app.js</span> · renderChrome() ＋ 文案键 t("meta", …)</p>
+</div>
+<div class="file fe vqa">
+  <h3>D3 · The language buttons: 繁 / 简 / EN<br>（右上角按钮：一键切换三种语言）</h3>
+  <p class="ven"><b>EN:</b> The top-right button group switches the whole app between Traditional, Simplified and English instantly. Every interface string is stored as a tc/sc/en trio in the T table at the top of app.js, and t(key) returns the one for the current language; longer bilingual paragraphs live in the CPN and ABOUT tables. setLang() saves the choice to localStorage (key bp-lang), updates the html lang attribute and re-renders the chrome and the current page, so the preference survives reloads.</p>
+  <p class="vcn"><b>中文：</b>右上角按钮组可在 繁/简/EN 之间瞬时切换整个应用。所有界面文案以三语三元组存在 app.js 开头的 T 表里，取词函数 t(key) 按当前语言返回；较长的双语文案放在 CPN 和 ABOUT 两张表。setLang() 把选择存进 localStorage（键名 bp-lang）、更新 html 的 lang 属性并重渲染界面与当前页，刷新后偏好仍保留。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/index.html</span>（#lang）· <span class="f">docs/app.js</span> · T 表（约 L35）/ t() / setLang()（约 L298）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D4 · The bottom tab bar: five pages, lazy loading<br>（底部导航：五个页签与懒加载）</h3>
+  <p class="ven"><b>EN:</b> Five bottom tabs switch the five pages: Calendar, Compare, Queue, Spots, About. setTab() shows the chosen section and hides the rest; the three heavier pages (compare, queue, spots) render lazily on first visit rather than at startup, so the default landing page — the calendar — appears immediately.</p>
+  <p class="vcn"><b>中文：</b>底部五个页签对应五个页面：日历、对比、排队、景点、关于。setTab() 显示所选分区、隐藏其余；三个较重的页面（对比、排队、景点）采用首次访问才渲染的懒加载，而不是启动时全部渲染，因此默认落地页"日历"能立刻出现。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/index.html</span>（#tabbar，按钮带 data-t="cal|cmp|risk|poi|about"）· <span class="f">docs/app.js</span> · setTab()（约 L333）</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="d1">① 日历页 · Calendar（默认首页）</h3>
+<div class="file fe vqa">
+  <h3>D5 · Direction switch and colour legend<br>（方向切换与五色图例）</h3>
+  <p class="ven"><b>EN:</b> The calendar opens with a segmented control for direction — Hong Kong to Mainland, or the reverse — and a five-colour legend. The direction matters because the same port behaves very differently the two ways (morning versus evening peaks). segDir() stores the choice, bindSeg() wires the buttons, and cpOrder() fixes the port display order per direction so rows never jump between visits.</p>
+  <p class="vcn"><b>中文：</b>日历页顶部是方向切换（香港→内地 / 内地→香港）和五色图例。方向必须区分：同一口岸两个方向的忙闲完全不同（早高峰对晚高峰）。segDir() 记住当前方向，bindSeg() 绑定按钮，cpOrder() 固定每个方向的口岸显示顺序，行序不因切换而跳动。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · segDir()（约 L344）/ bindSeg()（约 L350）/ cpOrder()（约 L287）/ renderCal()</p>
+</div>
+<div class="file fe vqa">
+  <h3>D6 · The 14-day heat grid<br>（14 天热力网格）</h3>
+  <p class="ven"><b>EN:</b> The main grid is fourteen days across and one row per port; each cell is coloured by its forecast congestion band. Past days are trimmed at startup — the app always begins at today — and the weekday header marks today and any festive day. calBlock() builds one port row and renderCal() loops over the ports; every band comes straight from data.json, already computed by the Python pipeline.</p>
+  <p class="vcn"><b>中文：</b>主体网格是"横轴 14 天 × 每口岸一行"，格子按预测拥堵档位着色。启动时把过去的日期裁掉——应用永远从今天开始；星期表头会标出"今天"与节假日。calBlock() 生成一个口岸行，renderCal() 遍历所有口岸；每格的档位直接来自 data.json，由 Python 流水线预先算好。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · calBlock()（约 L377）/ renderCal()（约 L410）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D7 · The day-detail sheet: everything on one panel<br>（当日详情弹层：一格子的全部信息）</h3>
+  <p class="ven"><b>EN:</b> Tapping any cell opens a bottom sheet with the full story of that port-day: the band chip, the estimated crossings, the latest actual figure, the 80% interval (P10–P90), the probability of a busy day, a Markov band bar built from that port's own transition history, checkpoint reference clearing times (P50/85/95), and the hourly curve. Nothing here is recomputed in the browser — openCellSheet() reads finished numbers from data.json and formats them.</p>
+  <p class="vcn"><b>中文：</b>点任意格子弹出当日详情：档位标签、预计过关量、最新实测值、80% 区间（P10–P90）、"繁忙概率"、由该口岸自身转移历史画出的马尔可夫档位条、参考过关时间（P50/85/95）以及分时曲线。这里浏览器不做任何重算——openCellSheet() 只是把 data.json 里的成品数字取出来排版。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · openCellSheet()（约 L436）/ mkBlock()（约 L427）/ openSheet()（约 L827）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D8 · The hourly curve and the best windows<br>（逐小时曲线与最佳窗口）</h3>
+  <p class="ven"><b>EN:</b> The sheet's lower half shows twenty-four hourly bars with the smoothest windows highlighted. The shape comes from an intraday template chosen by day type — workday, weekend or festive (dayType()) — and scaled to that day's forecast total; each hour is then converted, via the Erlang-C formula, into the chance of waiting more than half an hour. Because no official hourly data exists, the whole curve is labelled a model estimate.</p>
+  <p class="vcn"><b>中文：</b>弹层下半部分是 24 根逐小时柱，最顺的时段会高亮。曲线形状来自按"工作日/周末/节假日"（dayType()）挑选的分时模板，再按当天预测总量缩放；每小时的高度经 Erlang-C 公式换算成"排队超过半小时"的概率。由于没有官方分时数据，整条曲线明确标注为模型估算。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · hourlyBlock()（约 L483）/ hourlyWeights()（约 L471）/ dayType()（约 L466）/ erlangC()（约 L656）</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="d2">② 对比页 · Compare</h3>
+<div class="file fe vqa">
+  <h3>D9 · Date chips: pick a day, line up the ports<br>（日期选取：选一天，口岸并排）</h3>
+  <p class="ven"><b>EN:</b> The compare page answers "which port for this day?". A row of date chips covers the forecast window; picking one lays all ports out side by side for that date. renderCmp() drives the whole page and re-renders on every chip tap.</p>
+  <p class="vcn"><b>中文：</b>对比页回答"某天该走哪个口岸"。一排日期覆盖整个预测窗口，选中某天就把所有口岸在这一天并排铺开。renderCmp() 驱动整页，每次点选都会重渲染。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderCmp()（约 L587）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D10 · Smoothest-first ordering and the "best of day" flag<br>（最顺优先排序与"当日最佳"标记）</h3>
+  <p class="ven"><b>EN:</b> The eight port cards are sorted smoothest-first: by band level ascending, then by busy-probability ascending. The sorting runs at render time in JavaScript over the same data.json fields, and the winner carries a "best of the day" flag. It is a good example of what the app does compute live — cheap ordering, never forecasting.</p>
+  <p class="vcn"><b>中文：</b>八张口岸卡按"最顺优先"排序：先按档位升序，再按繁忙概率升序。排序在渲染时由 JavaScript 基于 data.json 的同一批字段完成，头名卡片带"当日最佳"标记。这是 App 少量现场计算的例子——只做轻量排序，绝不在浏览器里做预测。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderCmp()（约 L587，排序逻辑在其内）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D11 · Inside a card: band, volume, sparkline, multiple<br>（卡片内部：档位、总量、走势线、倍数）</h3>
+  <p class="ven"><b>EN:</b> Each card shows the band chip, the forecast volume, a sixty-day inline sparkline, and a multiple such as "0.6× the busiest port". spark() draws the sparkline as a small inline SVG straight from the series tail in data.json — there is no chart library anywhere in the app.</p>
+  <p class="vcn"><b>中文：</b>每张卡包含档位标签、预测过关量、60 天迷你走势线和"约为最忙口岸的 0.6 倍"这样的倍数。spark() 用 data.json 里的序列尾部直接画内联 SVG 走势线——整个应用不引入任何图表库。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · spark()（约 L633）/ chip()（约 L358）</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="d3">③ 排队页 · Queue</h3>
+<div class="file fe vqa">
+  <h3>D12 · Selectors and the simulate button<br>（选择器与"模拟排队"按钮）</h3>
+  <p class="ven"><b>EN:</b> The queue page is the app's one live-computation page: pick a port, a date and an hour, then press simulate. renderRisk() wires the controls and blocks impossible combinations; the button hands over to runMC().</p>
+  <p class="vcn"><b>中文：</b>排队页是应用里唯一现场计算的页面：选口岸、日期、小时，按"模拟排队"。renderRisk() 绑定控件并挡住无意义的组合，按钮把工作交给 runMC()。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderRisk()（约 L763）/ runMC()（约 L667）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D13 · The red risk card: seeded Monte Carlo in the browser<br>（红色风险卡：浏览器里带种子的蒙特卡洛）</h3>
+  <p class="ven"><b>EN:</b> runMC() draws three thousand Monte-Carlo scenarios: forecast volume plus its uncertainty, spread into per-minute arrivals, fed through an Erlang-C single-queue model with thirty seconds of service per person. It reports the chance of waiting over half an hour, a typical wait and a P90 wait. The randomness is seeded — hash32() turns the port-date-hour label into a seed for mulberry32(), and the constants match the Python queue model exactly — so the browser reproduces the report's numbers.</p>
+  <p class="vcn"><b>中文：</b>runMC() 做 3000 次蒙特卡洛抽样：预测量加上不确定性，摊成每分钟到达率，送进"每人服务 30 秒"的 Erlang-C 单队模型；输出"排队超半小时"的概率、典型等待和 P90 等待。随机数是有种子的——hash32() 把"口岸-日期-小时"标签散列成种子喂给 mulberry32()，常数与 Python 端排队模型完全一致——浏览器里算出的数字能复现报告里的数字。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · runMC()（约 L667）/ erlangC()（约 L656）/ pWait30()（约 L564）/ hash32()（约 L550）/ mulberry32()（约 L555）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D14 · The blue advice card, histogram and cumulative curve<br>（蓝色建议卡、直方图与累计曲线）</h3>
+  <p class="ven"><b>EN:</b> When the red card looks bad, a blue card beside it suggests a better port or hour drawn from precomputed lookups, and below, a wait-time histogram and a cumulative curve show the spread behind the headline numbers — all built from the same three thousand draws.</p>
+  <p class="vcn"><b>中文：</b>红卡不理想时，旁边的蓝卡会从预计算的查找表里建议更优的口岸或时段；下方的等待时间直方图和累计曲线展示主要数字背后的分布——同样来自那 3000 次抽样。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderRiskResult()（约 L706）</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="d4">④ 景点页 · Spots</h3>
+<div class="file fe vqa">
+  <h3>D15 · Ranked attraction cards<br>（按情感排序的景点卡）</h3>
+  <p class="ven"><b>EN:</b> The spots page ranks Hong Kong attractions by sentiment score. Each card shows the score band, the number of reviews behind it, and the top positive and negative keywords. None of this is computed in the browser: src/nlp.py runs TF-IDF plus a class-balanced logistic regression over 161,442 labelled reviews and ships the finished rankings in nlp.json; renderPoi() only lays them out.</p>
+  <p class="vcn"><b>中文：</b>景点页按情感得分给香港景点排序。每张卡显示得分档、支撑它的评论数、最主要的正面和负面关键词。这些都不在浏览器里算：src/nlp.py 对 161,442 条带标签评论跑 TF-IDF 加类平衡逻辑回归，把成品排序写进 nlp.json，renderPoi() 只负责排版。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderPoi()（约 L802）· 数据源 <span class="f">docs/nlp.json</span>（src/nlp.py 产出）</p>
+</div>
+<div class="file fe vqa">
+  <h3>D16 · Keyword filter and the corpus disclosure<br>（关键词筛选与语料披露）</h3>
+  <p class="ven"><b>EN:</b> Keyword chips filter the card list instantly. The page also carries an explicit disclosure: the Hong Kong review text shown inside the app is a labelled synthetic demonstration corpus, because the real training corpus cannot be redistributed under its licence — it is the model, not the demo text, that was trained on real data.</p>
+  <p class="vcn"><b>中文：</b>关键词可以即时筛选卡片列表。页面上还有一条明确披露：应用内展示的香港评论文本是标注清楚的合成演示语料，因为真实训练语料按授权条款不可再分发——接受真实数据训练的是模型，而不是演示文本。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · renderPoi()（筛选逻辑在其内）</p>
+</div>
+
+<h3 style="margin:22px 0 4px" id="d5">⑤ 关于页 · About</h3>
+<div class="file fe vqa">
+  <h3>D17 · The honesty page<br>（诚实声明页）</h3>
+  <p class="ven"><b>EN:</b> The About page is the honesty statement: where the data comes from (official annual throughput plus the observed daily series), the four-step pipeline behind the forecasts, and the four disclosed limitations — no official hourly data, self-calibrated queue capacity, weather deliberately excluded for reproducibility, and a single-pool abstraction of many counters. The full text lives in the ABOUT table keyed by language, and renderChrome() injects the right version.</p>
+  <p class="vcn"><b>中文：</b>关于页就是"诚实声明"：数据从哪来（官方年度通关量 + 观测到的每日序列）、预测背后的四步流水线，以及四条公示局限——没有官方分时数据、排队容量为自校准、为保证可复现刻意不接入天气、多柜台被抽象为单队列。全文存在按语言键控的 ABOUT 表里，由 renderChrome() 注入对应版本。</p>
+  <p class="vcode">📍 代码：<span class="f">docs/app.js</span> · ABOUT 表（约 L145）/ renderChrome()（约 L311）</p>
+</div>
+
+<h2 class="n" id="s13">13｜想亲眼看它跑一遍？</h2>
 <p>装好 Python 3.10+ 与 numpy / pandas 后，在项目根目录：</p>
 <table>
   <tr><th>命令</th><th>会发生什么</th></tr>
@@ -797,7 +923,7 @@
 </table>
 <p class="meta">注：<span class="f">src/models/nlp.py</span> 需要另行下载 Kaggle 评论 CSV（授权原因不随包分发）；六个界面测试需要 Node.js 与 playwright-core。</p>
 
-<h2 class="n" id="s13">13｜一页总表：33 个文件对号入座</h2>
+<h2 class="n" id="s14">14｜一页总表：33 个文件对号入座</h2>
 <table>
   <tr><th style="width:250px">文件</th><th>一句话职责</th></tr>
   <tr><td colspan="2" style="background:#f7f5ee"><b>根目录</b></td></tr>
